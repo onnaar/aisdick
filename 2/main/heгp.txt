@@ -1,0 +1,5 @@
+make IMPL=list TYPE=dynamic
+
+
+makefile : path and start lib in main direct
+
