@@ -1,0 +1,5 @@
+-Iinclude
+-Ilibs/input_lib/include
+-Ilibs/table_lib/include
+-Wall
+-Wextra
