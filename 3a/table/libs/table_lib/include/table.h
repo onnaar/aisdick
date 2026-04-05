@@ -13,15 +13,17 @@ typedef enum {
 } status;
 
 typedef struct {
-    struct KeySpace *key_space;
+    struct KeySpace *head;
 } Table;
 
 Table *TableCreate();
 
+KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur);
+Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur);
 status TableInsert(Table *const table, const KeyType key, const InfoType *const info);
 status TableImport(Table *const table, const char *const filename);
-Table *TableFindVersion(const Table *const table, KeyType key, ReleaseType release);
-Table *TableFindKey(const Table *const table, KeyType key);
+Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release);
+Table *TableFindKey(Table *const table, KeyType key);
 
 status TableOutput(const Table *const table);
 
