@@ -18,8 +18,8 @@ typedef struct {
 
 Table *TableCreate();
 
-KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur);
-Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur);
+KeySpace *FindKey(const Table *const table, KeyType key, KeySpace **cur);
+Node *FindRelease(const KeySpace *cur_key_space, ReleaseType release, Node **cur);
 status TableInsert(Table *const table, const KeyType key, const InfoType *const info);
 status TableImport(Table *const table, const char *const filename);
 Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release);

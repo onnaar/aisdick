@@ -7,7 +7,7 @@ Table *TableCreate() {
     return (Table *)calloc(1, sizeof(Table));
 }
 
-KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur) {
+KeySpace *FindKey(const Table *const table, KeyType key, KeySpace **cur) {
     if (!cur || !table) {
         return NULL;
     }
@@ -23,7 +23,7 @@ KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur) {
     return prev;
 }
 
-Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur) {
+Node *FindRelease(const KeySpace *cur_key_space, ReleaseType release, Node **cur) {
     if (!cur || !cur_key_space) {
         return NULL;
     }
