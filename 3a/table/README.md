@@ -1,6 +1,14 @@
-* to compile project use : `make`
-* to delete all obj,bin,so files : `make clean`
-* to start prog : `valgrind ./lab3`
+# Сборка
+`make`
+
+# Удаление бинарников
+`make clean`
+
+# Запуск
+`valgrind ./lab3`
+
+# Импорт существующих таблиц из текстовых файлов
+Файлы с информацией в каталоге `datafiles`, по умолчанию существует `data.txt` 
 
 # **Вариант №47**
 ## Основные свойства таблицы

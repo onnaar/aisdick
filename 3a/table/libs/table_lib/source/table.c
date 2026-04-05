@@ -170,8 +170,14 @@ status TableImport(Table *const table, const char *const filename) {
     if (!table) {
         return NOT_EXIST;
     }
-    FILE *file = fopen(filename, "r");
+    char *full_path = NULL;
+    int status = asprintf(&full_path, "datafiles/%s", filename);
+    if (status < 0) {
+        return MEMORY_ERROR;
+    }
+    FILE *file = fopen(full_path, "r");
     if (!file) {
+        free(full_path);
         return NOT_FOUND;
     }
     KeyType key = 0;
@@ -181,6 +187,7 @@ status TableImport(Table *const table, const char *const filename) {
         free(info);
     }
     fclose(file);
+    free(full_path);
     return OK;
 }
 
