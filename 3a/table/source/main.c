@@ -7,23 +7,26 @@ void menu_print();
 
 int main() {
     Table *table = TableCreate();
-    char *conditions[] = {"OK", "NOT_EXIST", "NOT_FOUND", "TABLE_EMPTY", "MEMORY_ERROR", "END OF INPUT"};
+    char *conditions[] = {"OK", "NOT_EXIST", "NOT_FOUND", "TABLE_EMPTY", "MEMORY_ERROR", \
+        "RELEASE DUPLICATE", "WRONG FORMAT", "END OF INPUT"};
     FunctionArray cur = NULL;
-    FunctionArray FuncArray[] = {DoInsert, DoFindVersion, DoFindKey, DoImport, DoDeleteVersion, DoDeleteKey, DoOutput, ProgramEnd};
-    status stat = OK;
+    FunctionArray FuncArray[] = {DoInsert, DoFindVersion, DoFindKey, DoImport, DoExport, DoDeleteVersion, DoDeleteKey, DoOutput, ProgramEnd};
+    TableStatus stat = OK;
     int option = 0;
     InputStatus inp_stat = INPUT_OK;
     while (cur != ProgramEnd && stat != MEMORY_ERROR && stat != NOT_EXIST && stat != END_OF_INPUT) {
         menu_print();
         printf("select an option\n");
-        inp_stat = GetInt(&option, 1, 8);
+        inp_stat = GetInt(&option, 1, 9);
         if (inp_stat != INPUT_OK) {
             stat = END_OF_INPUT;
             continue;
         }
         cur = FuncArray[option - 1];
         stat = cur(table);
-        printf("\n%s\n\n", conditions[stat]);
+        printf("\n%s\n", conditions[stat]);
+        TableOutput(table);
+        printf("\n");
     }
     TableDelete(table);
     return 0;
@@ -34,8 +37,9 @@ void menu_print() {
     printf("2: find element by key and version\n");
     printf("3: find all key releases\n");
     printf("4: import information from text file\n");
-    printf("5: delete key version\n");
-    printf("6: delete all key releases\n");
-    printf("7: table output\n");
-    printf("8: program end\n");
+    printf("5: export information to text file\n");
+    printf("6: delete key version\n");
+    printf("7: delete all key releases\n");
+    printf("8: table output\n");
+    printf("9: program end\n");
 }

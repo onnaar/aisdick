@@ -1,5 +1,6 @@
-#include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include "input.h"
 
@@ -135,4 +136,88 @@ InputStatus GetString(char **const str) {
         }
     }
     return INPUT_OK;
+}
+
+InputStatus StrToZu(const char *const str, size_t *num) {
+    if (!str || !num) {
+        return INPUT_WRONG;
+    }
+    size_t fake_num = 0, i = 0;
+    char *new_str = strdup(str);
+    if (!new_str) {
+        return ERR;
+    }
+    bool is_ok = true;
+    while (*(new_str + i) && is_ok) {
+        if (*(new_str + i) >= '0' && *(new_str + i) <= '9') {
+            fake_num = 10 * fake_num + (*(new_str + i) - '0');
+        } else {
+            is_ok = false;
+        }
+        i++;
+    }
+    *num = fake_num;
+    free(new_str);
+    return (is_ok ? INPUT_OK : INPUT_WRONG);
+}
+
+char *my_strtok(char *str, const char *delim) {
+    static char *cur_ptr = NULL;
+    char *token = NULL;
+    if (str == NULL) {
+        str = cur_ptr;
+        if (str == NULL) {
+            return NULL;
+        }
+    }
+    str += strspn(str, delim);
+    if (*str == '\0') {
+        cur_ptr = NULL;
+        return NULL;
+    }
+    token = str;
+    str = strpbrk(token, delim);
+    if (str != NULL) {
+        *str = '\0';
+        cur_ptr = str + 1;
+    } else {
+        cur_ptr = NULL;
+    }
+    return token;
+}
+
+char *my_readline(FILE *file, const char *PROMT) {
+    char buf[100] = {0}; 
+    char *res = NULL;
+    int len = 0;
+    int n = 0;
+    if (PROMT && file == stdin) {
+        printf("%s", PROMT);
+    }
+    do {
+        n = fscanf(file, "%99[^\n]", buf);
+        if (n < 0 && !res) {
+            return NULL;
+        } else if (n > 0) {
+            size_t chunk_len = 0;
+            chunk_len = strlen(buf);
+            int str_len = len + chunk_len;
+            char *new_res = (char *)realloc(res, str_len + 1);
+            if (!new_res) {
+                free(res);
+                return NULL;
+            }
+            res = new_res;
+            memcpy(res + len, buf, chunk_len);
+            len = str_len;
+            } else {
+                fgetc(file);
+            }
+    } while (n > 0);
+    if (len > 0) {
+        res[len] = '\0';
+    } else {
+        res = (char *)calloc(1, sizeof(char));
+    }
+    return res;
 }

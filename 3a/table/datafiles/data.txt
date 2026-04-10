@@ -1,5 +1,16 @@
-12 ab
-12 aaaaa
-12 q
-12 b
+TABLE_STRUCTURE
+0 1 wdw
+0 0 wawdawd
+0 1 wdwdwawadwapdkod
+2 1 d
 
+
+
+
+34 3 
+31 v
+12 4 wdl
+ v 
+
+12 2 k    p
+12 1 a

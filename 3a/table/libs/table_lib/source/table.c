@@ -1,13 +1,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include "input.h"
 #include "table.h"
+
+#define PROMT "> "
+#define DELIM " \n\t"
+#define MAGIC_WORD "TABLE_STRUCTURE"
+#define FORMAT_CHECK(contidion, buffer) \
+        if (contidion) {   \
+            free(buffer);  \
+            continue;   \
+        }
 
 Table *TableCreate() {
     return (Table *)calloc(1, sizeof(Table));
 }
 
-KeySpace *FindKey(const Table *const table, KeyType key, KeySpace **cur) {
+KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur) {
     if (!cur || !table) {
         return NULL;
     }
@@ -23,7 +34,7 @@ KeySpace *FindKey(const Table *const table, KeyType key, KeySpace **cur) {
     return prev;
 }
 
-Node *FindRelease(const KeySpace *cur_key_space, ReleaseType release, Node **cur) {
+Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur) {
     if (!cur || !cur_key_space) {
         return NULL;
     }
@@ -39,7 +50,7 @@ Node *FindRelease(const KeySpace *cur_key_space, ReleaseType release, Node **cur
     return prev;
 }
 
-status TableInsert(Table *const table, KeyType key, const InfoType *const info) {
+TableStatus TableInsert(Table *const table, KeyType key, const InfoType *const info) {
     if (!table || !info) {
         return NOT_EXIST;
     }
@@ -63,7 +74,36 @@ status TableInsert(Table *const table, KeyType key, const InfoType *const info) 
     return OK;
 }
 
-status TableDeleteVersion(Table *const table, KeyType key, ReleaseType release) {
+TableStatus TableInsertRelease(Table *const table, KeyType key, const InfoType *const info, const ReleaseType release) {
+    if (!table || !info) {
+        return NOT_EXIST;
+    }
+    KeySpace *cur_key_space = NULL;
+    FindKey(table, key, &cur_key_space);
+    if (cur_key_space) {
+        Node *is_existing = NULL;
+        FindRelease(cur_key_space, release, &is_existing);
+        if (is_existing) {
+            return RELEASE_DUPLICATE;
+        }
+        Node *cur = NodeCreateRelease(info, release);
+        if (!cur) {
+            return MEMORY_ERROR;
+        }
+        cur->next = cur_key_space->node;
+        cur_key_space->node = cur;
+    } else {
+        cur_key_space = KeySpaceCreateRelease(info, key, release);
+        if (!cur_key_space) {
+            return MEMORY_ERROR;
+        }
+        cur_key_space->link = table->head;
+        table->head = cur_key_space;
+    }
+    return OK;
+}
+
+TableStatus TableDeleteVersion(Table *const table, KeyType key, ReleaseType release) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -92,10 +132,11 @@ status TableDeleteVersion(Table *const table, KeyType key, ReleaseType release) 
         //KeySpaceDelete(cur_key_space);
         free(cur_key_space);
     }
+
     return OK;
 }
 
-status TableDeleteKey(Table *const table, KeyType key) {
+TableStatus TableDeleteKey(Table *const table, KeyType key) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -112,7 +153,6 @@ status TableDeleteKey(Table *const table, KeyType key) {
     KeySpaceDelete(cur_key_space);
     return OK;
 }
-
 
 Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release) {
     Table *found_table = TableCreate();
@@ -136,7 +176,7 @@ Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release) {
         TableDelete(table);
         return NULL;
     }
-    TableInsert(found_table, key, new_info);
+    TableInsertRelease(found_table, key, new_info, cur_node->release);
     free(new_info);
     return found_table;
 } 
@@ -159,39 +199,82 @@ Table *TableFindKey(Table *const table, KeyType key) {
             TableDelete(table);
             return NULL;
         }
-        TableInsert(found_table, key, new_info);
+        TableInsertRelease(found_table, key, new_info, cur_node->release);
         free(new_info);
         cur_node = cur_node->next;
     }
     return found_table;
 } 
 
-status TableImport(Table *const table, const char *const filename) {
+TableStatus TableImport(Table *const table, const char *const filename) {
     if (!table) {
         return NOT_EXIST;
     }
-    char *full_path = NULL;
-    int status = asprintf(&full_path, "datafiles/%s", filename);
-    if (status < 0) {
-        return MEMORY_ERROR;
-    }
-    FILE *file = fopen(full_path, "r");
+    FILE *file = fopen(filename, "r");
     if (!file) {
-        free(full_path);
         return NOT_FOUND;
     }
-    KeyType key = 0;
+    char *magic = my_readline(file, "");
+    if (!magic || (strcmp(magic, MAGIC_WORD)) != 0) {
+        if (magic) {
+            free(magic);
+        }
+        fclose(file);
+        return WRONG_FORMAT;
+    }
+    free(magic);
+    char *buffer = NULL;
     InfoType *info = NULL;
-    while (fscanf(file, "%zu %ms", &key, &info) == 2) {
-        TableInsert(table, key, info);
-        free(info);
+    KeyType key = 0;
+    ReleaseType release = 0;
+    while ((buffer = my_readline(file, PROMT)) != NULL) {
+        char *word = strtok(buffer, DELIM);
+        FORMAT_CHECK(word == NULL, buffer)
+        StrToZu(word, &key);
+        word = strtok(NULL, DELIM);
+        FORMAT_CHECK(word == NULL, buffer)
+        StrToZu(word, &release);
+        FORMAT_CHECK(release == 0, buffer)
+        word = strtok(NULL, "");
+        FORMAT_CHECK(word == NULL, buffer)
+        info = strdup(word);
+        if (info) {
+            TableStatus stat = TableInsertRelease(table, key, info, release);
+            if (stat == RELEASE_DUPLICATE) {
+                printf("\ncurrent node with key = %zu and release = %zu - duplicate, hasnt been inserted\n", key, release);
+            }
+            free(info);
+        }
+        free(buffer);
     }
     fclose(file);
-    free(full_path);
     return OK;
 }
 
-status TableOutput(const Table *const table) {
+TableStatus TableExport(const Table *const table, const char *const filename) {
+    if (!table || !filename) {
+        return NOT_EXIST;
+    }
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        return NOT_FOUND;
+    }
+    fprintf(file, "%s\n", MAGIC_WORD);
+    KeySpace *cur_key_space = table->head;
+    Node *cur_node = NULL;
+    while (cur_key_space) {
+        cur_node = cur_key_space->node;
+        while (cur_node) {
+            fprintf(file, "%zu %zu %s\n", cur_key_space->key, cur_node->release, cur_node->info);
+            cur_node = cur_node->next;
+        }
+        cur_key_space = cur_key_space->link;
+    }
+    fclose(file);
+    return OK;
+}
+
+TableStatus TableOutput(const Table *const table) {
     if (!table || !table->head || !table->head->node) {
         return TABLE_EMPTY;
     }
@@ -205,6 +288,21 @@ status TableOutput(const Table *const table) {
             printf("%-10s | %-8zu | %-20s\n", "", cur_node->release, cur_node->info);
             cur_node = cur_node->next;
         }
+        printf("-----------|----------|----------------------\n");
+        cur_key_space = cur_key_space->link;
+    }
+    return OK;
+}
+
+TableStatus TableDownOutput(const Table *const table) {
+    if (!table || !table->head || !table->head->node) {
+        return TABLE_EMPTY;
+    }
+    printf("\n%-10s | %-8s | %-20s\n", "Key", "Rel", "Info");
+    printf("-----------|----------|----------------------\n");
+    KeySpace *cur_key_space = table->head;
+    while (cur_key_space) {
+        KeySpaceDownOutput(cur_key_space);
         printf("-----------|----------|----------------------\n");
         cur_key_space = cur_key_space->link;
     }

@@ -1,6 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include <stddef.h>
 #include <stdio.h>
 
 typedef char InfoType;
@@ -13,6 +14,8 @@ typedef struct Node {
 } Node;
 
 Node *NodeCreate(const InfoType *const info, ReleaseType last_rel);
+Node *NodeCreateRelease(const InfoType *const info, ReleaseType release);
+Node *NodeCopy(const Node *const node);
 void NodeDelete(Node *node);
 
 #endif 

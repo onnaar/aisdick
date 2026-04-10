@@ -2,6 +2,7 @@
 #define TABLE_H
 
 #include "keySpace.h"
+#include "node.h"
 // массив указателей которые будут вызывать диалоговые функции. в одном каталоге с меин 
 typedef enum {
     OK = 0,
@@ -9,8 +10,10 @@ typedef enum {
     NOT_FOUND,
     TABLE_EMPTY,
     MEMORY_ERROR,
+    RELEASE_DUPLICATE,
+    WRONG_FORMAT,
     END_OF_INPUT
-} status;
+} TableStatus;
 
 typedef struct {
     struct KeySpace *head;
@@ -18,17 +21,20 @@ typedef struct {
 
 Table *TableCreate();
 
-KeySpace *FindKey(const Table *const table, KeyType key, KeySpace **cur);
-Node *FindRelease(const KeySpace *cur_key_space, ReleaseType release, Node **cur);
-status TableInsert(Table *const table, const KeyType key, const InfoType *const info);
-status TableImport(Table *const table, const char *const filename);
+KeySpace *FindKey(Table *talbe, KeyType key, KeySpace **cur);
+Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur);
+TableStatus TableInsert(Table *const table, const KeyType key, const InfoType *const info);
+TableStatus TableInsertRelease(Table *const table, const KeyType key, const InfoType *const info, const ReleaseType release);
+TableStatus TableImport(Table *const table, const char *const filename);
+TableStatus TableExport(const Table *const table, const char *const filename);
 Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release);
 Table *TableFindKey(Table *const table, KeyType key);
 
-status TableOutput(const Table *const table);
+TableStatus TableOutput(const Table *const table);
+TableStatus TableDownOutput(const Table *const table);
 
-status TableDeleteVersion(Table *const table, KeyType key, ReleaseType release);
-status TableDeleteKey(Table *const table, KeyType key);
+TableStatus TableDeleteVersion(Table *const table, KeyType key, ReleaseType release);
+TableStatus TableDeleteKey(Table *const table, KeyType key);
 void TableDelete(Table *table);
 
 #endif

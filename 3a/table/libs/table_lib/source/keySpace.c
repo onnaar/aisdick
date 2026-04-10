@@ -1,5 +1,9 @@
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "keySpace.h"
+#include "node.h"
+#include "stack.h"
 
 KeySpace *KeySpaceCreate(const InfoType *const info, KeyType key) {
     KeySpace *cur_key_space = (KeySpace *)calloc(1, sizeof(KeySpace));
@@ -13,6 +17,39 @@ KeySpace *KeySpaceCreate(const InfoType *const info, KeyType key) {
         return NULL;
     }
     return cur_key_space;
+}
+
+KeySpace *KeySpaceCreateRelease(const InfoType *const info, KeyType key, ReleaseType release) {
+    KeySpace *cur_key_space = KeySpaceCreate(info, key);
+    if (!cur_key_space) {
+        return NULL;
+    }
+    cur_key_space->node->release = release;
+    return cur_key_space;
+}
+
+void KeySpaceDownOutput(const KeySpace *const cur_key_space) {
+    if (!cur_key_space) {
+        return;
+    }
+    Node *cur_node = cur_key_space->node;
+    Stack *stack = StackCreate();
+    while (cur_node) {
+        StackPush(stack, cur_node);
+        cur_node = cur_node->next;
+    }
+    bool first = true;
+    while ((cur_node = StackPop(stack)) != NULL) {
+        if (first) {
+            printf("%-10zu | %-8zu | %-20s\n", cur_key_space->key, cur_node->release, cur_node->info);
+            first = false;
+        } else {
+            printf("%-10s | %-8zu | %-20s\n", "", cur_node->release, cur_node->info);
+        }
+        NodeDelete(cur_node);
+    }
+    StackFree(stack);
+    return;
 }
 
 void KeySpaceDelete(KeySpace *key_space) {

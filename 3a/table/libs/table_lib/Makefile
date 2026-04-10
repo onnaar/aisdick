@@ -4,6 +4,8 @@ BUILD_DIR = build
 
 CC = gcc
 CFLAGS = -I$(INCLUDE_DIR) -fPIC -Wall -Wextra -Werror 
+CFLAGS += -I../../libs/input_lib/include
+CFLAGS += -I../../libs/stack_lib/include
 LDFLAGS = -shared
 
 LIB = libtable.so

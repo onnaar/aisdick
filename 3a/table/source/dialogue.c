@@ -4,7 +4,7 @@
 #include "input.h"
 #include "table.h"
 
-status DoInsert(Table *const table) {
+TableStatus DoInsert(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     } 
@@ -21,7 +21,7 @@ status DoInsert(Table *const table) {
        free(info);
        return END_OF_INPUT;
     } 
-    status proc_stat = TableInsert(table, key, info);
+    TableStatus proc_stat = TableInsert(table, key, info);
     free(info);
     if (proc_stat != OK) {
         return proc_stat;
@@ -29,7 +29,26 @@ status DoInsert(Table *const table) {
     return OK;
 }
 
-status DoImport(Table *const table) {
+TableStatus DoImport(Table *const table) {
+    if (!table) {
+        return NOT_EXIST;
+    }
+    char *filename = NULL;
+    printf("enter name of the file realative to the current directory:\n");
+    InputStatus stat = GetString(&filename);
+    if (stat != INPUT_OK) {
+        free(filename);
+        return END_OF_INPUT;
+    }
+    TableStatus proc_stat = TableImport(table, filename);
+    free(filename);
+    if (proc_stat != OK) {
+        return proc_stat;
+    }
+    return OK;
+}
+
+TableStatus DoExport(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -40,7 +59,7 @@ status DoImport(Table *const table) {
         free(filename);
         return END_OF_INPUT;
     }
-    status proc_stat = TableImport(table, filename);
+    TableStatus proc_stat = TableExport(table, filename);
     free(filename);
     if (proc_stat != OK) {
         return proc_stat;
@@ -48,7 +67,7 @@ status DoImport(Table *const table) {
     return OK;
 }
 
-status DoFindVersion(Table *const table) {
+TableStatus DoFindVersion(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -73,7 +92,7 @@ status DoFindVersion(Table *const table) {
     return OK;
 }
 
-status DoFindKey(Table *const table) {
+TableStatus DoFindKey(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -87,23 +106,24 @@ status DoFindKey(Table *const table) {
     if (!res_table) {
         return NOT_FOUND;
     }
-    TableOutput(res_table);
+    TableDownOutput(res_table);
+    //TableOutput(res_table);
     TableDelete(res_table);
     return OK;
 }
 
-status DoOutput(Table *const table) {
+TableStatus DoOutput(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     }
-    status stat = TableOutput(table);
+    TableStatus stat = TableOutput(table);
     if (stat != OK) {
         return stat;
     }
     return OK;
 }
 
-status DoDeleteVersion(Table *const table) {
+TableStatus DoDeleteVersion(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -119,14 +139,14 @@ status DoDeleteVersion(Table *const table) {
     if (stat != INPUT_OK) {
         return END_OF_INPUT;
     }
-    status proc_stat = TableDeleteVersion(table, key, release);
+    TableStatus proc_stat = TableDeleteVersion(table, key, release);
     if (proc_stat != OK) {
         return proc_stat;
     }
     return OK;
 }
 
-status DoDeleteKey(Table *const table) {
+TableStatus DoDeleteKey(Table *const table) {
     if (!table) {
         return NOT_EXIST;
     }
@@ -136,14 +156,14 @@ status DoDeleteKey(Table *const table) {
     if (stat != INPUT_OK) {
        return END_OF_INPUT;
     }
-    status proc_stat = TableDeleteKey(table, key);
+    TableStatus proc_stat = TableDeleteKey(table, key);
     if (proc_stat != OK) {
         return proc_stat;
     }
     return OK;
 }
 
-status ProgramEnd(Table *const table) {
+TableStatus ProgramEnd(Table *const table) {
     (void )table;
     return OK;
 }
