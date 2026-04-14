@@ -214,7 +214,7 @@ TableStatus TableImport(Table *const table, const char *const filename) {
     if (!file) {
         return NOT_FOUND;
     }
-    char *magic = my_readline(file, "");
+    char *magic = my_readline(file);
     if (!magic || (strcmp(magic, MAGIC_WORD)) != 0) {
         if (magic) {
             free(magic);
@@ -227,7 +227,7 @@ TableStatus TableImport(Table *const table, const char *const filename) {
     InfoType *info = NULL;
     KeyType key = 0;
     ReleaseType release = 0;
-    while ((buffer = my_readline(file, PROMT)) != NULL) {
+    while ((buffer = my_readline(file)) != NULL) {
         char *word = strtok(buffer, DELIM);
         FORMAT_CHECK(word == NULL, buffer)
         StrToZu(word, &key);

@@ -186,14 +186,11 @@ char *my_strtok(char *str, const char *delim) {
     return token;
 }
 
-char *my_readline(FILE *file, const char *PROMT) {
+char *my_readline(FILE *file) {
     char buf[100] = {0}; 
     char *res = NULL;
     int len = 0;
     int n = 0;
-    if (PROMT && file == stdin) {
-        printf("%s", PROMT);
-    }
     do {
         n = fscanf(file, "%99[^\n]", buf);
         if (n < 0 && !res) {
