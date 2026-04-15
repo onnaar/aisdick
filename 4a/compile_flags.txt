@@ -1,0 +1,5 @@
+-Iinclude
+-Ilibs/input_lib/include
+-Ilibs/bstree_lib/include
+-Wall
+-Wextra
