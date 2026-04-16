@@ -16,6 +16,7 @@ typedef struct Node {
 } Node;
 
 Node *NodeCreate(Node *parent, size_t key, size_t *info);
+Node *NodeCopy(const Node *const node);
 void NodeDelete(Node *node);
 
 #endif

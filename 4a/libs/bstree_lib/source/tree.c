@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "tree.h"
 #include "node.h"
+#include "stack.h"
 
 Tree *TreeCreate(size_t key, size_t *info) {
     if (!info) {
@@ -160,3 +161,13 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     return OK;
 }
 
+TreeStatus TreeOutput(Tree *tree) {
+    if (!tree) {
+        return NOT_EXIST;
+    }
+    if (!tree->root) {
+        return TREE_EMPTY;
+    }
+    Stack *stack = StackCreate();
+    
+}

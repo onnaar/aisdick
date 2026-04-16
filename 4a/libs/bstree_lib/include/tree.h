@@ -21,7 +21,7 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key);
 Node *FindKey(Tree *tree, size_t key);
 Node *FindMinKey(Node *node);
 Node *FindNextKey(Tree *tree, size_t key);
-TreeStatus TreeOutput(Tree *tree, char type);
+TreeStatus TreeOutput(Tree *tree);
 
 void TreeDelete(Tree *tree);
 
