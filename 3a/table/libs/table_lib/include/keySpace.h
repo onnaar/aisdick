@@ -12,7 +12,7 @@ typedef struct KeySpace {
 } KeySpace;
 
 KeySpace *KeySpaceCreate(const InfoType *const info, KeyType key);
-KeySpace *KeySpaceCreateRelease(const InfoType *const info, KeyType key, ReleaseType release);
+KeySpace *KeySpaceCreateRelease(const InfoType *const info, const KeyType key, const ReleaseType release);
 void KeySpaceDownOutput(const KeySpace *const cur_key_space);
 void KeySpaceDelete(KeySpace *key_space);
 

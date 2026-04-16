@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "keySpace.h"
-#include "node.h"
 #include "stack.h"
 
 KeySpace *KeySpaceCreate(const InfoType *const info, KeyType key) {
@@ -19,7 +18,7 @@ KeySpace *KeySpaceCreate(const InfoType *const info, KeyType key) {
     return cur_key_space;
 }
 
-KeySpace *KeySpaceCreateRelease(const InfoType *const info, KeyType key, ReleaseType release) {
+KeySpace *KeySpaceCreateRelease(const InfoType *const info, const KeyType key, const ReleaseType release) {
     KeySpace *cur_key_space = KeySpaceCreate(info, key);
     if (!cur_key_space) {
         return NULL;

@@ -8,9 +8,10 @@
 #define PROMT "> "
 #define DELIM " \n\t"
 #define MAGIC_WORD "TABLE_STRUCTURE"
-#define FORMAT_CHECK(contidion, buffer) \
+#define FORMAT_CHECK(contidion, buffer, line_number) \
         if (contidion) {   \
             free(buffer);  \
+            printf("\nerror format: line %zu\n", line_number); \
             continue;   \
         }
 
@@ -18,7 +19,7 @@ Table *TableCreate() {
     return (Table *)calloc(1, sizeof(Table));
 }
 
-KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur) {
+KeySpace *FindKey(const Table *const table, const KeyType key, KeySpace **const cur) {
     if (!cur || !table) {
         return NULL;
     }
@@ -34,7 +35,7 @@ KeySpace *FindKey(Table *table, KeyType key, KeySpace **cur) {
     return prev;
 }
 
-Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur) {
+Node *FindRelease(const KeySpace *const cur_key_space, const ReleaseType release, Node **const cur) {
     if (!cur || !cur_key_space) {
         return NULL;
     }
@@ -52,7 +53,7 @@ Node *FindRelease(KeySpace *cur_key_space, ReleaseType release, Node **cur) {
 
 TableStatus TableInsert(Table *const table, KeyType key, const InfoType *const info) {
     if (!table || !info) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     KeySpace *cur_key_space = NULL;
     FindKey(table, key, &cur_key_space);
@@ -76,7 +77,7 @@ TableStatus TableInsert(Table *const table, KeyType key, const InfoType *const i
 
 TableStatus TableInsertRelease(Table *const table, KeyType key, const InfoType *const info, const ReleaseType release) {
     if (!table || !info) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     KeySpace *cur_key_space = NULL;
     FindKey(table, key, &cur_key_space);
@@ -103,9 +104,9 @@ TableStatus TableInsertRelease(Table *const table, KeyType key, const InfoType *
     return OK;
 }
 
-TableStatus TableDeleteVersion(Table *const table, KeyType key, ReleaseType release) {
+TableStatus TableDeleteVersion(Table *const table, const KeyType key, const ReleaseType release) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     KeySpace *cur_key_space = NULL;
     KeySpace *prev_key_space = FindKey(table, key, &cur_key_space);
@@ -136,9 +137,9 @@ TableStatus TableDeleteVersion(Table *const table, KeyType key, ReleaseType rele
     return OK;
 }
 
-TableStatus TableDeleteKey(Table *const table, KeyType key) {
+TableStatus TableDeleteKey(Table *const table, const KeyType key) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     KeySpace *cur_key_space = NULL;
     KeySpace *prev_key_space = FindKey(table, key, &cur_key_space);
@@ -154,7 +155,7 @@ TableStatus TableDeleteKey(Table *const table, KeyType key) {
     return OK;
 }
 
-Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release) {
+Table *TableFindVersion(const Table *const table, const KeyType key, const ReleaseType release) {
     Table *found_table = TableCreate();
     if (!found_table) {
         return NULL;
@@ -173,7 +174,7 @@ Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release) {
     }
     char *new_info = strdup(cur_node->info);
     if (!new_info) {
-        TableDelete(table);
+        TableDelete(found_table);
         return NULL;
     }
     TableInsertRelease(found_table, key, new_info, cur_node->release);
@@ -181,7 +182,7 @@ Table *TableFindVersion(Table *const table, KeyType key, ReleaseType release) {
     return found_table;
 } 
 
-Table *TableFindKey(Table *const table, KeyType key) {
+Table *TableFindKey(const Table *const table, const KeyType key) {
     Table *found_table = TableCreate();
     if (!found_table) {
         return NULL;
@@ -196,7 +197,7 @@ Table *TableFindKey(Table *const table, KeyType key) {
     while (cur_node) {
         char *new_info = strdup(cur_node->info);
         if (!new_info) {
-            TableDelete(table);
+            TableDelete(found_table);
             return NULL;
         }
         TableInsertRelease(found_table, key, new_info, cur_node->release);
@@ -208,12 +209,13 @@ Table *TableFindKey(Table *const table, KeyType key) {
 
 TableStatus TableImport(Table *const table, const char *const filename) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     FILE *file = fopen(filename, "r");
     if (!file) {
         return NOT_FOUND;
     }
+    size_t line_number = 1;
     char *magic = my_readline(file);
     if (!magic || (strcmp(magic, MAGIC_WORD)) != 0) {
         if (magic) {
@@ -228,20 +230,21 @@ TableStatus TableImport(Table *const table, const char *const filename) {
     KeyType key = 0;
     ReleaseType release = 0;
     while ((buffer = my_readline(file)) != NULL) {
+        line_number++;
         char *word = strtok(buffer, DELIM);
-        FORMAT_CHECK(word == NULL, buffer)
+        FORMAT_CHECK(word == NULL, buffer, line_number)
         StrToZu(word, &key);
         word = strtok(NULL, DELIM);
-        FORMAT_CHECK(word == NULL, buffer)
+        FORMAT_CHECK(word == NULL, buffer, line_number)
         StrToZu(word, &release);
-        FORMAT_CHECK(release == 0, buffer)
+        FORMAT_CHECK(release == 0, buffer, line_number)
         word = strtok(NULL, "");
-        FORMAT_CHECK(word == NULL, buffer)
+        FORMAT_CHECK(word == NULL, buffer, line_number)
         info = strdup(word);
         if (info) {
             TableStatus stat = TableInsertRelease(table, key, info, release);
             if (stat == RELEASE_DUPLICATE) {
-                printf("\ncurrent node with key = %zu and release = %zu - duplicate, hasnt been inserted\n", key, release);
+                printf("\ncurrent node with key = %zu and release = %zu - duplicate, hasn`t been inserted, line: %zu\n", key, release, line_number);
             }
             free(info);
         }
@@ -253,7 +256,7 @@ TableStatus TableImport(Table *const table, const char *const filename) {
 
 TableStatus TableExport(const Table *const table, const char *const filename) {
     if (!table || !filename) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     FILE *file = fopen(filename, "w");
     if (!file) {

@@ -6,7 +6,7 @@
 
 TableStatus DoInsert(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     } 
     printf("enter the key:\n");
     KeyType key = 0;
@@ -31,10 +31,10 @@ TableStatus DoInsert(Table *const table) {
 
 TableStatus DoImport(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     char *filename = NULL;
-    printf("enter name of the file realative to the current directory:\n");
+    printf("enter name of the file regarding current directory:\n");
     InputStatus stat = GetString(&filename);
     if (stat != INPUT_OK) {
         free(filename);
@@ -50,7 +50,7 @@ TableStatus DoImport(Table *const table) {
 
 TableStatus DoExport(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     char *filename = NULL;
     printf("enter name of the file:\n");
@@ -69,7 +69,7 @@ TableStatus DoExport(Table *const table) {
 
 TableStatus DoFindVersion(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     printf("enter the search key:\n");
     KeyType key = 0;
@@ -94,7 +94,7 @@ TableStatus DoFindVersion(Table *const table) {
 
 TableStatus DoFindKey(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     printf("enter the search key:\n");
     KeyType key = 0;
@@ -114,7 +114,7 @@ TableStatus DoFindKey(Table *const table) {
 
 TableStatus DoOutput(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     TableStatus stat = TableOutput(table);
     if (stat != OK) {
@@ -125,7 +125,7 @@ TableStatus DoOutput(Table *const table) {
 
 TableStatus DoDeleteVersion(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     printf("enter deleting key:\n");
     KeyType key = 0;
@@ -148,7 +148,7 @@ TableStatus DoDeleteVersion(Table *const table) {
 
 TableStatus DoDeleteKey(Table *const table) {
     if (!table) {
-        return NOT_EXIST;
+        return NOT_VALID;
     }
     printf("enter deleting key:\n");
     KeyType key = 0;
@@ -164,6 +164,6 @@ TableStatus DoDeleteKey(Table *const table) {
 }
 
 TableStatus ProgramEnd(Table *const table) {
-    (void )table;
+    (void)table;
     return OK;
 }

@@ -7,20 +7,21 @@ void menu_print();
 
 int main() {
     Table *table = TableCreate();
-    char *conditions[] = {"OK", "NOT_EXIST", "NOT_FOUND", "TABLE_EMPTY", "MEMORY_ERROR", \
+    char *conditions[] = {"OK", "NOT_VALID", "NOT_FOUND", "TABLE_EMPTY", "MEMORY_ERROR", \
         "RELEASE DUPLICATE", "WRONG FORMAT", "END OF INPUT"};
     FunctionArray cur = NULL;
     FunctionArray FuncArray[] = {DoInsert, DoFindVersion, DoFindKey, DoImport, DoExport, DoDeleteVersion, DoDeleteKey, DoOutput, ProgramEnd};
     TableStatus stat = OK;
     int option = 0;
     InputStatus inp_stat = INPUT_OK;
-    while (cur != ProgramEnd && stat != MEMORY_ERROR && stat != NOT_EXIST && stat != END_OF_INPUT) {
+    while (cur != ProgramEnd && stat != MEMORY_ERROR && stat != NOT_VALID && stat != END_OF_INPUT) {
         menu_print();
         printf("select an option\n");
         inp_stat = GetInt(&option, 1, 9);
         if (inp_stat != INPUT_OK) {
             stat = END_OF_INPUT;
-            continue;
+            printf("\nINPUT END\n\n");
+            break;
         }
         cur = FuncArray[option - 1];
         stat = cur(table);

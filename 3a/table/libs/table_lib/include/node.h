@@ -1,7 +1,6 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <stddef.h>
 #include <stdio.h>
 
 typedef char InfoType;
