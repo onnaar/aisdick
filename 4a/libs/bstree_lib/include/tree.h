@@ -18,8 +18,9 @@ typedef struct {
 Tree *TreeCreate(size_t key, size_t *value);
 TreeStatus TreeInsert(Tree *tree, size_t key, size_t *value);
 TreeStatus TreeKeyDelete(Tree *tree, size_t key);
-//TreeStatus TreeKeyDeletePrev(Tree *tree, size_t key);
 Node *FindKey(Tree *tree, size_t key);
+Node *FindMinKey(Node *node);
+Node *FindNextKey(Tree *tree, size_t key);
 TreeStatus TreeOutput(Tree *tree, char type);
 
 void TreeDelete(Tree *tree);

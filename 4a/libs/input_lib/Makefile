@@ -3,7 +3,7 @@ SOURCE_DIR = source
 BUILD_DIR = build
 
 CC = gcc
-CFLAGS = -Iinclude -fPIC -Wall -Wextra -Werror
+CFLAGS = -I$(INCLUDE_DIR) -fPIC -Wall -Wextra -Werror
 LDFLAGS = -shared
 LIB = libinput.so
 
