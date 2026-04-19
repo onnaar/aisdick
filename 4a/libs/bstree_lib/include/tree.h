@@ -4,10 +4,10 @@
 #include "node.h"
 
 typedef enum {
-    OK = 0,
-    NOT_EXIST,
-    MEMORY_ERROR,
-    NOT_FOUND,
+    TREE_OK = 0,
+    TREE_NOT_EXIST,
+    TREE_MEMORY_ERROR,
+    TREE_NOT_FOUND,
     TREE_EMPTY
 } TreeStatus;
 

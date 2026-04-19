@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "tree.h"
-#include "node.h"
 #include "stack.h"
 
 Tree *TreeCreate(size_t key, size_t *info) {
@@ -81,7 +80,7 @@ Node *FindNextKey(Tree *tree, size_t key) {
 
 TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
     if (!tree || !info) {
-        return NOT_EXIST;
+        return TREE_NOT_EXIST;
     }
     Node *cur = tree->root, *prev = NULL;
     RelativeIndex index = LEFT;
@@ -102,11 +101,11 @@ TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
     }
     Node *temp = NodeCreate(prev, key, info);
     if (!temp) {
-        return MEMORY_ERROR;
+        return TREE_MEMORY_ERROR;
     }
     if (!tree->root) {
        tree->root = temp;
-       return OK;
+       return TREE_OK;
     }
     if (cur) {
         prev->relatives[RIGHT] = temp;
@@ -116,23 +115,23 @@ TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
     } else {
         prev->relatives[index] = temp;
     }
-    return OK;
+    return TREE_OK;
 }
 
 TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     if (!tree) {
-        return NOT_EXIST;
+        return TREE_NOT_EXIST;
     }
     Node *target = NULL;
     target = FindKey(tree, key);
     if (!target) {
-        return NOT_FOUND;
+        return TREE_NOT_FOUND;
     }
     Node *parent = target->relatives[PARENT];
     if (!target->relatives[LEFT] && !target->relatives[RIGHT]) {
         parent->relatives[key < parent->key ? LEFT : RIGHT] = NULL;
         NodeDelete(target);
-        return OK;
+        return TREE_OK;
     }
     RelativeIndex index = LEFT; 
     if (!target->relatives[LEFT] || !target->relatives[RIGHT]) {
@@ -141,7 +140,7 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
         }
         target->relatives[index]->relatives[PARENT] = target->relatives[PARENT];
         NodeDelete(target);
-        return OK;
+        return TREE_OK;
     }
     Node *successor = FindNextKey(tree, key);
     target->key = successor->key;
@@ -158,16 +157,42 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
         }
     }
     NodeDelete(successor);
-    return OK;
+    return TREE_OK;
 }
 
 TreeStatus TreeOutput(Tree *tree) {
     if (!tree) {
-        return NOT_EXIST;
+        return TREE_NOT_EXIST;
     }
     if (!tree->root) {
         return TREE_EMPTY;
     }
     Stack *stack = StackCreate();
-    
+    if (!stack) {
+        return TREE_MEMORY_ERROR;
+    }
+    Node *cur = tree->root;
+    while (cur || !IsEmpty(stack)) {
+        while (cur) {
+            StackPush(stack, cur);
+            cur = cur->relatives[RIGHT];
+        }
+        cur = StackPop(stack);
+        printf("%zu %zu\n", cur->key, *cur->info);
+        cur = cur->relatives[LEFT];
+    }
+    StackFree(stack);
+    return TREE_OK;    
+}
+
+void TreeDelete(Tree *tree) {
+    if (!tree) {
+        return;
+    }
+    Node *cur = tree->root;
+    NodeDelete(cur);
+//    NodeDelete(cur->relatives[LEFT]);
+  //  NodeDelete(cur->relatives[RIGHT]);
+    free(tree);
+    return;
 }

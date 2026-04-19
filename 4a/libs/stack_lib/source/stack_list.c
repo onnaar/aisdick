@@ -15,28 +15,25 @@ Stack *StackCreate() {
     return (Stack *)calloc(1, sizeof(Stack));
 }
 
-StackStatus StackPush(Stack *stack, const Node *node) {
+StackStatus StackPush(Stack *const stack, Node *node) {
     if (!stack) {
-        return NULLPTR;
+        return STACK_NULLPTR;
     }
     NodeStack *cur_node = (NodeStack *)calloc(1, sizeof(NodeStack));
     if (!cur_node) {
-        return MEMORY_ERROR;
+        return STACK_MEMORY_ERROR;
     }
-    cur_node->node = NodeCopy(node);
-    if (!cur_node->node) {
-        return MEMORY_ERROR;
-    }
+    cur_node->node = node;
     if (!stack->top) {
         stack->top = cur_node;
     } else {
         cur_node->next = stack->top;
         stack->top = cur_node;
     }
-    return OK;
+    return STACK_OK;
 }
 
-Node *StackPop(Stack *stack) {
+Node *StackPop(Stack *const stack) {
     if (!stack) {
         return NULL;
     }
@@ -44,14 +41,10 @@ Node *StackPop(Stack *stack) {
         return NULL;
     }
     NodeStack *temp = stack->top;
-    Node *cur_node = NodeCopy(temp->node);
-    if (!cur_node) {
-        return NULL;
-    }
+    Node *temp_node = temp->node;
     stack->top = temp->next;
-    NodeDelete(temp->node);
     free(temp);
-    return cur_node;
+    return temp_node;
 }
 
 void StackFree(Stack *stack) {
@@ -64,6 +57,6 @@ void StackFree(Stack *stack) {
     free(stack);
 }
 
-bool IsEmpty(Stack *stack) {
+bool IsEmpty(const Stack *const stack) {
     return (!stack->top);
 }

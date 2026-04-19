@@ -5,9 +5,9 @@
 #include "node.h"
 
 typedef enum {
-    MEMORY_ERROR = -1,
-    NULLPTR,
-    OK,
+    STACK_MEMORY_ERROR = -1,
+    STACK_NULLPTR,
+    STACK_OK,
     STACK_OVERFLOW,
     STACK_EMPTY,
 } StackStatus;
@@ -15,9 +15,9 @@ typedef enum {
 typedef struct Stack Stack;
 
 Stack *StackCreate();
-StackStatus StackPush(Stack *, const Node *);
-Node *StackPop(Stack *);
+StackStatus StackPush(Stack *const, Node *);
+Node *StackPop(Stack *const);
 void StackFree(Stack *stack);
-bool IsEmpty(Stack *);
+bool IsEmpty(const Stack *const);
 
 #endif 

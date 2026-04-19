@@ -6,7 +6,7 @@
 
 typedef enum {
     INPUT_EOF = -1,
-    ERR,
+    INPUT_ERR,
     INPUT_OK,
     INPUT_WRONG
 } InputStatus;

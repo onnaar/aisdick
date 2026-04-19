@@ -8,7 +8,7 @@
 
 InputStatus GetInt(int *const num, int min, int max) {
     if (!num) {
-        return ERR;
+        return INPUT_ERR;
     }
     int x = 0;
     char ch = '0', f_ch = '0';
@@ -32,7 +32,7 @@ InputStatus GetInt(int *const num, int min, int max) {
             }
         }
         if (ungetc((int)f_ch, stdin) == EOF) {
-            return ERR;
+            return INPUT_ERR;
         }
         x = scanf("%d%c", num, &ch);
         if (x == EOF) {
@@ -54,7 +54,7 @@ InputStatus GetInt(int *const num, int min, int max) {
 
 InputStatus GetSizeT(size_t *const num) {
     if (!num) {
-        return ERR;
+        return INPUT_ERR;
     }
     int x = 0;
     long long fake_num = 0;
@@ -80,7 +80,7 @@ InputStatus GetSizeT(size_t *const num) {
             }
         }
         if (ungetc((int)f_ch, stdin) == EOF) {
-            return ERR;
+            return INPUT_ERR;
         }
         x = scanf("%lld%c", &fake_num, &ch);
         if (x == EOF) {
@@ -103,7 +103,7 @@ InputStatus GetSizeT(size_t *const num) {
 
 InputStatus GetString(char **const str) {
     if (!str) {
-        return ERR;
+        return INPUT_ERR;
     }
     int x = 0;
     char ch = '0', f_ch = '0';
@@ -127,7 +127,7 @@ InputStatus GetString(char **const str) {
             }
         }
         if (ungetc((int)f_ch, stdin) == EOF) {
-            return ERR;
+            return INPUT_ERR;
         }
         x = scanf("%m[^\n]%c", str, &ch);
         if (x == EOF) {
@@ -145,7 +145,7 @@ InputStatus StrToZu(const char *const str, size_t *num) {
     size_t fake_num = 0, i = 0;
     char *new_str = strdup(str);
     if (!new_str) {
-        return ERR;
+        return INPUT_ERR;
     }
     bool is_ok = true;
     while (*(new_str + i) && is_ok) {
