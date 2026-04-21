@@ -1,7 +1,9 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include "tree.h"
+#include "node.h"
 #include "stack.h"
 
 Tree *TreeCreate(size_t key, size_t *info) {
@@ -183,6 +185,42 @@ TreeStatus TreeOutput(Tree *tree) {
     }
     StackFree(stack);
     return TREE_OK;    
+}
+
+NodeArray *FindKeyRelease(Tree *tree, size_t key, size_t release) {
+    if (!tree) {
+        return NULL;
+    }
+    Node *cur = FindKey(tree, key);
+    if (!cur) {
+        return NULL;
+    }
+    if (release != 1) {
+        size_t i = 1;
+        for (; cur && cur->key == key && i != release; i++) {
+            cur = cur->relatives[RIGHT];
+        }
+        if (i != release) {
+            return NULL;
+        }
+    }
+    NodeArray *array = NodeArrayManage(NULL);
+    if (!array) {
+        return NULL;
+    }
+   // *(array->node_array) = NodeCopy(cur);
+    *(array->node_array) = cur;
+    if (!*(array->node_array)) {
+        return NULL;
+    }
+    return array;
+}
+
+NodeArray *SpecialSearch(Tree *tree, size_t info) {
+    if (!tree) {
+        return NULL;
+    }
+    size_t max_delta = abs(tree->root->info - info);
 }
 
 void TreeDelete(Tree *tree) {

@@ -1,0 +1,13 @@
+digraph BST {
+    node [shape=circle];
+    
+    10 -> 5;
+    10 -> 15;
+    5 -> 2;
+    5 -> 7;
+    
+    // Пример для узла 15, у которого нет левого потомка
+    15 -> hidden [style=invis];
+    15 -> 20;
+    hidden [style=invis, label="", width=0];
+}

@@ -9,6 +9,11 @@ typedef enum {
     PARENT
 } RelativeIndex; 
 
+typedef struct {
+    struct Node **node_array;
+    size_t size;
+} NodeArray;
+
 typedef struct Node {
     struct Node *relatives[3];
     size_t key;
@@ -17,6 +22,7 @@ typedef struct Node {
 
 Node *NodeCreate(Node *parent, size_t key, size_t *info);
 Node *NodeCopy(const Node *const node);
+NodeArray *NodeArrayManage(NodeArray *array);
 void NodeDelete(Node *node);
 
 #endif

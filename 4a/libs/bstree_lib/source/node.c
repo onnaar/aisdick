@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include "node.h"
 
@@ -18,6 +19,30 @@ Node *NodeCreate(Node *parent, size_t key, size_t *info) {
     *new_info = *info;
     node->info = new_info;
     return node;
+}
+
+NodeArray *NodeArrayManage(NodeArray *array) {
+    if (!array) {
+        array = (NodeArray *)calloc(1, sizeof(NodeArray));
+        if (!array) {
+            return NULL;
+        }
+        array->size = 1;
+        array->node_array = (Node **)calloc(array->size, sizeof(Node *));
+        if (!array->node_array) {
+            free(array);
+            return NULL;
+        }
+        return array;
+    }
+    size_t new_size = array->size * 2;
+    Node **new_ptr = (Node **)realloc(array->node_array, new_size * sizeof(Node *));
+    if (!new_ptr) {
+        return NULL;
+    }
+    array->node_array = new_ptr;
+    array->size = new_size;
+    return array; 
 }
 
 Node *NodeCopy(const Node *const node) {
