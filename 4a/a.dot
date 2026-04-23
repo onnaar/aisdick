@@ -1,0 +1,11 @@
+https:/dotrend.dozen.mephi.ru/?dot=
+digraph BST {
+    node [shape=circle];
+    10 -> 5;
+    10 -> 15;
+    5 -> 2;
+    5 -> 7;
+    15 -> hidden [style=invis];
+    15 -> 20;
+    hidden [style=invis, label="", width=0];
+}

@@ -16,7 +16,7 @@ INPUT_LIB = $(BUILD_DIR)/libinput.so
 BSTREE_LIB = $(BUILD_DIR)/libbstree.so
 STACK_LIB = $(BUILD_DIR)/libstack.so
 
-CFLAGS += -I$(INPUT_LIB_DIR)/$(INCLUDE_DIR) -I$(BSTREE_LIB_DIR)/$(INCLUDE_DIR) -I$(STACK_LIB_DIR)/$(INCLUDE_DIR)
+CFLAGS += -I$(INCLUDE_DIR) -I$(INPUT_LIB_DIR)/$(INCLUDE_DIR) -I$(BSTREE_LIB_DIR)/$(INCLUDE_DIR) -I$(STACK_LIB_DIR)/$(INCLUDE_DIR)
 LDFLAGS = -L$(BUILD_DIR) -linput -lbstree -lstack -Wl,-rpath,'$$ORIGIN/$(BUILD_DIR)'
 OBJECTS = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(wildcard $(SOURCE_DIR)/*.c))
 

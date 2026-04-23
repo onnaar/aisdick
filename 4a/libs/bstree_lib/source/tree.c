@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -6,16 +5,9 @@
 #include "node.h"
 #include "stack.h"
 
-Tree *TreeCreate(size_t key, size_t *info) {
-    if (!info) {
-        return NULL;
-    }
+Tree *TreeCreate(void) {
     Tree *tree = (Tree *)calloc(1, sizeof(Tree));
     if (!tree) {
-        return NULL;
-    }
-    tree->root = NodeCreate(NULL, key, info);
-    if (!tree->root) {
         return NULL;
     }
     return tree;
@@ -97,6 +89,7 @@ TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
                 prev = cur;
                 cur = cur->relatives[RIGHT];
             }
+            index = RIGHT;
             break;
         }
         cur = cur->relatives[index];
@@ -124,14 +117,17 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     if (!tree) {
         return TREE_NOT_EXIST;
     }
-    Node *target = NULL;
-    target = FindKey(tree, key);
+    Node *target = FindKey(tree, key);
     if (!target) {
         return TREE_NOT_FOUND;
     }
     Node *parent = target->relatives[PARENT];
     if (!target->relatives[LEFT] && !target->relatives[RIGHT]) {
-        parent->relatives[key < parent->key ? LEFT : RIGHT] = NULL;
+        if (!parent) {
+            tree->root = NULL;
+        } else {
+            parent->relatives[key < parent->key ? LEFT : RIGHT] = NULL;
+        }
         NodeDelete(target);
         return TREE_OK;
     }
@@ -140,51 +136,28 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
         if (!target->relatives[LEFT]) {
             index = RIGHT;
         }
-        target->relatives[index]->relatives[PARENT] = target->relatives[PARENT];
+        Node *child = target->relatives[index];
+        Node *parent = target->relatives[PARENT];
+        child->relatives[PARENT] = parent;
+        if (!parent) {
+            tree->root = child;
+        } else {
+            parent->relatives[(parent->relatives[LEFT] == target) ? LEFT : RIGHT] = child;
+        }
         NodeDelete(target);
         return TREE_OK;
     }
     Node *successor = FindNextKey(tree, key);
     target->key = successor->key;
     target->info = successor->info;
-    if (successor->relatives[PARENT]->relatives[LEFT] == successor) {
-        successor->relatives[PARENT]->relatives[LEFT] = successor->relatives[RIGHT];
-        if (successor->relatives[RIGHT]) {
-            successor->relatives[RIGHT]->relatives[PARENT] = successor->relatives[PARENT];
-        }
-    } else {
-        successor->relatives[PARENT]->relatives[RIGHT] = successor->relatives[RIGHT];
-        if (successor->relatives[RIGHT]) {
-            successor->relatives[RIGHT]->relatives[PARENT] = successor->relatives[PARENT];
-        }
+    
+    index = ((successor->relatives[PARENT]->relatives[LEFT] == successor) ? LEFT : RIGHT);
+    successor->relatives[PARENT]->relatives[index] = successor->relatives[RIGHT];
+    if (successor->relatives[RIGHT]) {
+        successor->relatives[RIGHT]->relatives[PARENT] = successor->relatives[PARENT];
     }
     NodeDelete(successor);
     return TREE_OK;
-}
-
-TreeStatus TreeOutput(Tree *tree) {
-    if (!tree) {
-        return TREE_NOT_EXIST;
-    }
-    if (!tree->root) {
-        return TREE_EMPTY;
-    }
-    Stack *stack = StackCreate();
-    if (!stack) {
-        return TREE_MEMORY_ERROR;
-    }
-    Node *cur = tree->root;
-    while (cur || !IsEmpty(stack)) {
-        while (cur) {
-            StackPush(stack, cur);
-            cur = cur->relatives[RIGHT];
-        }
-        cur = StackPop(stack);
-        printf("%zu %zu\n", cur->key, *cur->info);
-        cur = cur->relatives[LEFT];
-    }
-    StackFree(stack);
-    return TREE_OK;    
 }
 
 NodeArray *FindKeyRelease(Tree *tree, size_t key, size_t release) {
@@ -204,33 +177,140 @@ NodeArray *FindKeyRelease(Tree *tree, size_t key, size_t release) {
             return NULL;
         }
     }
-    NodeArray *array = NodeArrayManage(NULL);
+    NodeArray *array = NodeArrayManage(NULL, 1);
     if (!array) {
         return NULL;
     }
-   // *(array->node_array) = NodeCopy(cur);
     *(array->node_array) = cur;
     if (!*(array->node_array)) {
         return NULL;
     }
+    array->size = 1;
     return array;
 }
 
-NodeArray *SpecialSearch(Tree *tree, size_t info) {
+void Output(Node *cur, void *context) {
+    (void)context;
+    printf("%zu %zu\n", cur->key, *cur->info);
+}
+
+void Special(Node *cur, void *context) {
+    SpSearchStructure *data = (SpSearchStructure *)context; 
+    size_t cur_info = *(cur->info);
+    size_t delta = (cur_info > data->info) ? (cur_info - data->info) : (data->info - cur_info);
+    if (delta > data->max_delta) {
+        data->max_delta = delta;
+        data->array->size = 1;
+    } else if (delta == data->max_delta) {
+        data->array->size++;
+    }
+}
+
+void NodeArrayAdd(NodeArray *array, Node *node) {
+    if (!array || !node || !array->node_array) {
+        return;
+    }
+    array->node_array[array->size] = node;
+    array->size++;
+}
+
+void AllSpecialNodes(Node *cur, void *context) {
+    SpSearchStructure *data = (SpSearchStructure *)context; 
+    size_t cur_info = *(cur->info);
+    size_t delta = (cur_info > data->info) ? (cur_info - data->info) : (data->info - cur_info);
+    if (delta == data->max_delta) {
+        NodeArrayAdd(data->array, cur);
+    }
+}
+
+TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), void *context) {
     if (!tree) {
+        return TREE_NOT_EXIST;
+    }
+    if (!tree->root) {
+        return TREE_EMPTY;
+    }
+    Stack *stack = StackCreate();
+    if (!stack) {
+        return TREE_MEMORY_ERROR;
+    }
+    Node *cur = tree->root;
+    while (cur || !IsEmpty(stack)) {
+        while (cur) {
+            StackPush(stack, cur);
+            cur = cur->relatives[RIGHT];
+        }
+        cur = StackPop(stack);
+        action(cur, context);
+        cur = cur->relatives[LEFT];
+    }
+    StackFree(stack);
+    return TREE_OK;    
+}
+
+SpSearchStructure *SpecialSearch(Tree *tree, size_t info) {
+    if (!tree || !tree->root) {
         return NULL;
     }
-    size_t max_delta = abs(tree->root->info - info);
+    SpSearchStructure *data = (SpSearchStructure *)calloc(1, sizeof(SpSearchStructure));
+    if (!data) {
+        return NULL;
+    }
+    data->array = (NodeArray *)calloc(1, sizeof(NodeArray));
+    if (!data->array) {
+        free(data);
+        return NULL;
+    }
+    data->info = info;
+    data->max_delta = 0;
+    TreeTraversing(tree, Special, data);
+    size_t count = data->array->size;
+    if (count > 0) {
+        data->array->node_array = (Node **)calloc(count, sizeof(Node *));
+        if (!data->array->node_array) {
+            free(data->array);
+            free(data);
+            return NULL;
+        }
+    }
+    data->array->size = 0;
+    TreeTraversing(tree, AllSpecialNodes, data);
+    return data;
+}
+
+void SpSearchStructureDelete(SpSearchStructure *data) {
+    if (!data) {
+        return;
+    }
+    if (data->array) {
+        if (data->array->node_array) {
+            free(data->array->node_array);
+        }
+        free(data->array);
+    }
+    free(data);
 }
 
 void TreeDelete(Tree *tree) {
     if (!tree) {
         return;
     }
-    Node *cur = tree->root;
-    NodeDelete(cur);
-//    NodeDelete(cur->relatives[LEFT]);
-  //  NodeDelete(cur->relatives[RIGHT]);
+    if (tree->root) {
+        Stack *stack = StackCreate();
+        if (stack) {
+            StackPush(stack, tree->root);
+            while (!IsEmpty(stack)) {
+                Node *cur = StackPop(stack);
+                if (cur->relatives[LEFT]) {
+                    StackPush(stack, cur->relatives[LEFT]);
+                }
+                if (cur->relatives[RIGHT]) {
+                    StackPush(stack, cur->relatives[RIGHT]);
+                }
+                NodeDelete(cur);
+            }
+            StackFree(stack);
+        }
+    }
     free(tree);
-    return;
 }
