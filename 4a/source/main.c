@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "dialogue.h"
 #include "input.h"
 #include "tree.h"
@@ -10,7 +11,7 @@ int main() {
     if (!tree) {
         return 666;
     }
-    char *conditions[] = {"OK", "NOT VALID", "MEMORY ERROR", "NOT_FOUND", "TREE EMPTY"};
+    char *conditions[] = {"OK", "NOT VALID", "MEMORY ERROR", "NOT_FOUND", "TREE EMPTY", "INPUT_END"};
     FunctionArray cur = NULL;
     FunctionArray FuncArray[] = {DoInsert, DoFindKey, DoFindRelease, DoSpecialSearch, DoDeleteKey, DoOutput, ProgramEnd};
     TreeStatus stat = TREE_OK;
@@ -26,13 +27,15 @@ int main() {
         }
         cur = FuncArray[option - 1];
         stat = cur(tree);
-        printf("\n%s\n", conditions[stat]);
-        printf("\n");
-        if (DoOutput(tree) != TREE_EMPTY) {
-            printf("\n");
+        printf("\n%s\n\n", conditions[stat]);
+        if (stat == TREE_END) {
+            break;
         }
+        TreeOutput(tree);
+        printf("\n");
     }
-    TreeDelete(tree);
+    TreeTraversing(tree, Delete, NULL);
+    free(tree);
     return 0;
 }
 

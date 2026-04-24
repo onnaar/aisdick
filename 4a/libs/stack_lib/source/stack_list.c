@@ -1,10 +1,10 @@
 #include <stdlib.h>
-#include "node.h"
+#include <stdbool.h>
 #include "stack.h"
 
 typedef struct NodeStack {
     struct NodeStack *next;
-    Node *node;
+    void *data;
 } NodeStack;
 
 struct Stack {
@@ -15,36 +15,29 @@ Stack *StackCreate() {
     return (Stack *)calloc(1, sizeof(Stack));
 }
 
-StackStatus StackPush(Stack *const stack, Node *node) {
+StackStatus StackPush(Stack *const stack, void *data) {
     if (!stack) {
         return STACK_NULLPTR;
     }
-    NodeStack *cur_node = (NodeStack *)calloc(1, sizeof(NodeStack));
-    if (!cur_node) {
+    NodeStack *new_node = (NodeStack *)calloc(1, sizeof(NodeStack));
+    if (!new_node) {
         return STACK_MEMORY_ERROR;
     }
-    cur_node->node = node;
-    if (!stack->top) {
-        stack->top = cur_node;
-    } else {
-        cur_node->next = stack->top;
-        stack->top = cur_node;
-    }
+    new_node->data = data;
+    new_node->next = stack->top;
+    stack->top = new_node;
     return STACK_OK;
 }
 
-Node *StackPop(Stack *const stack) {
-    if (!stack) {
-        return NULL;
-    }
-    if (IsEmpty(stack)) {
+void *StackPop(Stack *const stack) {
+    if (!stack || !stack->top) {
         return NULL;
     }
     NodeStack *temp = stack->top;
-    Node *temp_node = temp->node;
+    void *data = temp->data;
     stack->top = temp->next;
     free(temp);
-    return temp_node;
+    return data;
 }
 
 void StackFree(Stack *stack) {
@@ -58,5 +51,5 @@ void StackFree(Stack *stack) {
 }
 
 bool IsEmpty(const Stack *const stack) {
-    return (!stack->top);
+    return (stack == NULL || stack->top == NULL);
 }

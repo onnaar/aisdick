@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
+#include "input.h"
 #include "tree.h"
-#include "node.h"
 #include "stack.h"
 
-Tree *TreeCreate(void) {
+// │ 2502 ├ 251c └ 2514 ─ 2500
+
+Tree *TreeCreate() {
     Tree *tree = (Tree *)calloc(1, sizeof(Tree));
     if (!tree) {
         return NULL;
@@ -74,7 +77,7 @@ Node *FindNextKey(Tree *tree, size_t key) {
 
 TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
     if (!tree || !info) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     Node *cur = tree->root, *prev = NULL;
     RelativeIndex index = LEFT;
@@ -115,7 +118,7 @@ TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
 
 TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     Node *target = FindKey(tree, key);
     if (!target) {
@@ -223,9 +226,17 @@ void AllSpecialNodes(Node *cur, void *context) {
     }
 }
 
+void Delete(Node *cur, void *context) {
+    if (!cur) {
+        return;
+    }
+    (void)context;
+    NodeDelete(cur);
+}
+
 TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), void *context) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     if (!tree->root) {
         return TREE_EMPTY;
@@ -234,15 +245,16 @@ TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), 
     if (!stack) {
         return TREE_MEMORY_ERROR;
     }
-    Node *cur = tree->root;
+    Node *cur = tree->root, *left_node = NULL;
     while (cur || !IsEmpty(stack)) {
         while (cur) {
             StackPush(stack, cur);
             cur = cur->relatives[RIGHT];
         }
         cur = StackPop(stack);
+        left_node = cur->relatives[LEFT];
         action(cur, context);
-        cur = cur->relatives[LEFT];
+        cur = left_node;
     }
     StackFree(stack);
     return TREE_OK;    
@@ -291,26 +303,141 @@ void SpSearchStructureDelete(SpSearchStructure *data) {
     free(data);
 }
 
-void TreeDelete(Tree *tree) {
+TreeStatus TreeOutput(Tree *tree) {
     if (!tree) {
-        return;
+        return TREE_NOT_VALID;
     }
-    if (tree->root) {
-        Stack *stack = StackCreate();
-        if (stack) {
-            StackPush(stack, tree->root);
-            while (!IsEmpty(stack)) {
-                Node *cur = StackPop(stack);
-                if (cur->relatives[LEFT]) {
-                    StackPush(stack, cur->relatives[LEFT]);
+    if (!tree->root) {
+        return TREE_EMPTY;
+    }
+    Stack *stack = StackCreate();
+    if (!stack) {
+        return TREE_MEMORY_ERROR;
+    }
+    PrintStackItem *root_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
+    if (!root_item) {
+        StackFree(stack);
+        return TREE_MEMORY_ERROR;
+    }
+    root_item->node = tree->root;
+    root_item->is_last_child = true;
+    StackPush(stack, root_item);
+    while (!IsEmpty(stack)) {
+        PrintStackItem *current_item = (PrintStackItem *)StackPop(stack);
+        Node *current_node = current_item->node;
+        size_t current_depth = current_item->depth;
+        bool is_last_child = current_item->is_last_child;
+        if (current_depth > 0) {
+            for (size_t i = 1; i < current_depth; i++) {
+                if (current_item->line_history[i]) {
+                    printf("\t");
+                } else {
+                    printf("│   ");
                 }
-                if (cur->relatives[RIGHT]) {
-                    StackPush(stack, cur->relatives[RIGHT]);
-                }
-                NodeDelete(cur);
             }
-            StackFree(stack);
+            printf("%s", is_last_child ? "└── " : "├── ");
         }
+        printf("[%zu:%zu]\n", current_node->key, *(current_node->info));
+        Node *left_node = current_node->relatives[LEFT];
+        Node *right_node = current_node->relatives[RIGHT];
+        if (right_node) {
+            PrintStackItem *right_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
+            if (right_item) {
+                right_item->node = right_node;
+                right_item->depth = current_depth + 1;
+                right_item->is_last_child = true;
+                for (size_t i = 1; i < current_depth; i++) {
+                    right_item->line_history[i] = current_item->line_history[i];
+                }
+                if (current_depth < MAX_PRINT_DEPTH) {
+                    right_item->line_history[current_depth] = is_last_child;
+                }
+                StackPush(stack, right_item);
+            }
+        }
+        if (left_node) {
+            PrintStackItem *left_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
+            if (left_item) {
+                left_item->node = left_node;
+                left_item->depth = current_depth + 1;
+                left_item->is_last_child = (right_node == NULL) ? true : false;
+                for (size_t i = 1; i < current_depth; i++) {
+                    left_item->line_history[i] = current_item->line_history[i];
+                }
+                if (current_depth < MAX_PRINT_DEPTH) {
+                    left_item->line_history[current_depth] = is_last_child;
+                }
+                StackPush(stack, left_item);
+            }
+        }
+        for (int i = 0; i < MAX_PRINT_DEPTH; i++) {
+            printf("%d ", current_item->line_history[i]);
+        }
+        printf("\n");
+        free(current_item);
     }
-    free(tree);
+    StackFree(stack);
+    return TREE_OK;
+}
+
+#define MAGIC_WORD "TREE_STRUCTURE"
+
+#define FORMAT_CHECK(condition, buffer, line_number) \
+    if (condition) { \
+        if (buffer) { \
+            free(buffer); \
+        } \
+        printf("\nerror format: line %zu\n", line_number); \
+        continue; \
+    }
+
+TreeStatus TreeImport(Tree *const tree, const char *const filename) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        return TREE_NOT_FOUND;
+    }
+    size_t line_number = 1;
+    char *magic = my_readline(file);
+    if (!magic || (strcmp(magic, MAGIC_WORD)) != 0) {
+        if (magic) {
+            free(magic);
+        }
+        fclose(file);
+        return TREE_WRONG_FORMAT;
+    }
+    free(magic);
+    char *buffer = NULL;
+    while ((buffer = my_readline(file)) != NULL) {
+        line_number++;
+        size_t key = 0;
+        // Используем твою функцию для ключа
+        if (StrToZu(buffer, &key) != 0) {
+            printf("\nerror format (key): line %zu\n", line_number);
+            free(buffer);
+            continue;
+        }
+        free(buffer);
+        buffer = my_readline(file);
+        line_number++;
+        FORMAT_CHECK(buffer == NULL, buffer, line_number)
+        size_t info_val = 0;
+        // Используем твою функцию для инфо
+        if (StrToZu(buffer, &info_val) == 0) {
+            size_t *info_ptr = (size_t *)malloc(sizeof(size_t));
+            if (info_ptr) {
+                *info_ptr = info_val;
+                TreeStatus stat = TreeInsert(tree, key, info_ptr);
+                if (stat == TREE_DUPLICATE) {
+                    printf("\nkey %zu - duplicate, line %zu\n", key, line_number - 1);
+                    free(info_ptr);
+                }
+            }
+        }
+        free(buffer);
+    }
+    fclose(file);
+    return TREE_OK;
 }

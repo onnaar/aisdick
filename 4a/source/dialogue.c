@@ -6,19 +6,19 @@
 
 TreeStatus DoInsert(Tree *const tree) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     printf("enter the key:\n");
     size_t key = 0;
     InputStatus stat = GetSizeT(&key);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     printf("enter the information:\n");
     size_t info_val = 0;
     stat = GetSizeT(&info_val);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     TreeStatus proc_stat = TreeInsert(tree, key, &info_val);
     if (proc_stat != TREE_OK) {
@@ -29,13 +29,13 @@ TreeStatus DoInsert(Tree *const tree) {
 
 TreeStatus DoFindKey(Tree *const tree) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     printf("enter the search key:\n");
     size_t key = 0;
     InputStatus stat = GetSizeT(&key);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     Node *res = FindKey(tree, key);
     if (!res) {
@@ -47,19 +47,19 @@ TreeStatus DoFindKey(Tree *const tree) {
 
 TreeStatus DoFindRelease(Tree *const tree) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     printf("enter the search key:\n");
     size_t key = 0;
     InputStatus stat = GetSizeT(&key);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     printf("enter the release:\n");
     size_t release = 0;
     stat = GetSizeT(&release);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     NodeArray *res = FindKeyRelease(tree, key, release);
     if (!res) {
@@ -72,13 +72,13 @@ TreeStatus DoFindRelease(Tree *const tree) {
 
 TreeStatus DoSpecialSearch(Tree *const tree) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     printf("enter the search info for max delta:\n");
     size_t info = 0;
     InputStatus stat = GetSizeT(&info);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     SpSearchStructure *res = SpecialSearch(tree, info);
     if (!res || !res->array || res->array->size == 0) {
@@ -95,13 +95,13 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
 
 TreeStatus DoDeleteKey(Tree *const tree) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
     printf("enter deleting key:\n");
     size_t key = 0;
     InputStatus stat = GetSizeT(&key);
     if (stat != INPUT_OK) {
-        return TREE_OK;
+        return TREE_END;
     }
     TreeStatus proc_stat = TreeKeyDelete(tree, key);
     if (proc_stat != TREE_OK) {
@@ -112,9 +112,10 @@ TreeStatus DoDeleteKey(Tree *const tree) {
 
 TreeStatus DoOutput(Tree *const tree) {
     if (!tree) {
-        return TREE_NOT_EXIST;
+        return TREE_NOT_VALID;
     }
-    TreeStatus stat = TreeTraversing(tree, Output, NULL);
+    printf("\n");
+    TreeStatus stat = TreeOutput(tree);
     if (stat != TREE_OK) {
         return stat;
     }
