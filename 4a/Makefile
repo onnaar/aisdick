@@ -38,7 +38,7 @@ super :
 	$(MAKE) run
 
 run : $(TARGET) 
-	valgrind --leak-check=full ./$(TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
 
 clean : 
 	rm -f $(TARGET) *.o

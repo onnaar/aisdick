@@ -1,13 +1,42 @@
-digraph BST {
-    node [shape=circle];
-    
-    10 -> 5;
-    10 -> 15;
-    5 -> 2;
-    5 -> 7;
-    
-    // Пример для узла 15, у которого нет левого потомка
-    15 -> hidden [style=invis];
-    15 -> 20;
-    hidden [style=invis, label="", width=0];
+digraph Tree {
+    ordering="out";
+    node [shape=circle, fontname="Arial"];
+    40 -> 36 [label="L"];
+    dummy_R_40 [style=invis];
+    40 -> dummy_R_40 [style=invis];
+    36 -> 34 [label="L"];
+    36 -> 38 [label="R"];
+    32 -> 24 [label="L"];
+    32 -> 40 [label="R"];
+    28 -> 26 [label="L"];
+    dummy_R_28 [style=invis];
+    28 -> dummy_R_28 [style=invis];
+    24 -> 20 [label="L"];
+    24 -> 28 [label="R"];
+    dummy_L_20 [style=invis];
+    20 -> dummy_L_20 [style=invis];
+    20 -> 22 [label="R"];
+    16 -> 2 [label="L"];
+    16 -> 32 [label="R"];
+    dummy_L_8 [style=invis];
+    8 -> dummy_L_8 [style=invis];
+    8 -> 9 [label="R"];
+    dummy_L_7 [style=invis];
+    7 -> dummy_L_7 [style=invis];
+    7 -> 8 [label="R"];
+    dummy_L_6 [style=invis];
+    6 -> dummy_L_6 [style=invis];
+    6 -> 7 [label="R"];
+    dummy_L_5 [style=invis];
+    5 -> dummy_L_5 [style=invis];
+    5 -> 6 [label="R"];
+    dummy_L_4 [style=invis];
+    4 -> dummy_L_4 [style=invis];
+    4 -> 5 [label="R"];
+    dummy_L_3 [style=invis];
+    3 -> dummy_L_3 [style=invis];
+    3 -> 4 [label="R"];
+    dummy_L_2 [style=invis];
+    2 -> dummy_L_2 [style=invis];
+    2 -> 3 [label="R"];
 }

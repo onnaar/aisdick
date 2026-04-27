@@ -70,6 +70,44 @@ TreeStatus DoFindRelease(Tree *const tree) {
     return TREE_OK;
 }
 
+TreeStatus DoImport(Tree *const tree) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    char *filename = NULL;
+    printf("enter name of the file regarding current directory:\n");
+    InputStatus stat = GetString(&filename);
+    if (stat != INPUT_OK) {
+        free(filename);
+        return TREE_END;
+    }
+    TreeStatus proc_stat = TreeImport(tree, filename);
+    free(filename);
+    if (proc_stat != TREE_OK) {
+        return proc_stat;
+    }
+    return TREE_OK;
+}
+
+TreeStatus DoExport(Tree *const tree) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    char *filename = NULL;
+    printf("enter name of the file regarding current directory:\n");
+    InputStatus stat = GetString(&filename);
+    if (stat != INPUT_OK) {
+        free(filename);
+        return TREE_END;
+    }
+    TreeStatus proc_stat = TreeExport(tree, filename);
+    free(filename);
+    if (proc_stat != TREE_OK) {
+        return proc_stat;
+    }
+    return TREE_OK;
+}
+
 TreeStatus DoSpecialSearch(Tree *const tree) {
     if (!tree) {
         return TREE_NOT_VALID;
@@ -90,6 +128,29 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
         printf("Special Node[%zu] - Key: %zu, Info: %zu\n", i, res->array->node_array[i]->key, *(res->array->node_array[i]->info));
     }
     SpSearchStructureDelete(res);
+    return TREE_OK;
+}
+
+TreeStatus DoGraphviz(Tree *const tree) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    printf("enter filename for PNG image: ");
+    char *filename = my_readline(stdin);
+    if (!filename) {
+        return TREE_NOT_VALID;
+    }
+    TreeStatus status = TreeGraphviz(tree, filename);
+    if (status == TREE_OK) {
+        printf("Success: tree visualization saved to '%s'\n", filename);
+        // По желанию можно сразу открыть файл в Linux (Debian)
+        char view_command[512];
+        sprintf(view_command, "xdg-open %s &", filename);
+        system(view_command);
+    } else {
+        printf("error\n");
+    }
+    free(filename);
     return TREE_OK;
 }
 

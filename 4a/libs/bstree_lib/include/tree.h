@@ -47,11 +47,15 @@ void Delete(Node *cur, void *context);
 void Special(Node *cur, void *context);
 TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), void *context);
 SpSearchStructure *SpecialSearch(Tree *tree, size_t info);
+TreeStatus TreeImport(Tree *const tree, const char *const filename);
 Node *FindMinKey(Node *node);
 Node *FindNextKey(Tree *tree, size_t key);
 TreeStatus TreeOutput(Tree *tree);
 
 void SpSearchStructureDelete(SpSearchStructure *data);
 //void TreeDelete(Tree *tree);
+
+TreeStatus TreeExport(Tree *tree, const char *filename);
+TreeStatus TreeGraphviz(Tree *tree, const char *filename);
 
 #endif

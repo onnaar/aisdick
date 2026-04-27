@@ -6,6 +6,8 @@
 #include "tree.h"
 #include "stack.h"
 
+#define MAGIC_WORD "TREE_STRUCTURE"
+
 // │ 2502 ├ 251c └ 2514 ─ 2500
 
 Tree *TreeCreate() {
@@ -355,6 +357,7 @@ TreeStatus TreeOutput(Tree *tree) {
                 StackPush(stack, right_item);
             }
         }
+        // additional func to make it easier
         if (left_node) {
             PrintStackItem *left_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
             if (left_item) {
@@ -370,26 +373,15 @@ TreeStatus TreeOutput(Tree *tree) {
                 StackPush(stack, left_item);
             }
         }
-        for (int i = 0; i < MAX_PRINT_DEPTH; i++) {
+        /*for (int i = 0; i < MAX_PRINT_DEPTH; i++) {
             printf("%d ", current_item->line_history[i]);
         }
-        printf("\n");
+        printf("\n");*/
         free(current_item);
     }
     StackFree(stack);
     return TREE_OK;
 }
-
-#define MAGIC_WORD "TREE_STRUCTURE"
-
-#define FORMAT_CHECK(condition, buffer, line_number) \
-    if (condition) { \
-        if (buffer) { \
-            free(buffer); \
-        } \
-        printf("\nerror format: line %zu\n", line_number); \
-        continue; \
-    }
 
 TreeStatus TreeImport(Tree *const tree, const char *const filename) {
     if (!tree) {
@@ -410,34 +402,76 @@ TreeStatus TreeImport(Tree *const tree, const char *const filename) {
     }
     free(magic);
     char *buffer = NULL;
-    while ((buffer = my_readline(file)) != NULL) {
+    while ((buffer = my_readline(file))) {
         line_number++;
         size_t key = 0;
-        // Используем твою функцию для ключа
-        if (StrToZu(buffer, &key) != 0) {
+        if (StrToZu(buffer, &key) != INPUT_OK) {
             printf("\nerror format (key): line %zu\n", line_number);
             free(buffer);
             continue;
         }
         free(buffer);
-        buffer = my_readline(file);
         line_number++;
-        FORMAT_CHECK(buffer == NULL, buffer, line_number)
+        buffer = my_readline(file);
         size_t info_val = 0;
-        // Используем твою функцию для инфо
-        if (StrToZu(buffer, &info_val) == 0) {
-            size_t *info_ptr = (size_t *)malloc(sizeof(size_t));
-            if (info_ptr) {
-                *info_ptr = info_val;
-                TreeStatus stat = TreeInsert(tree, key, info_ptr);
-                if (stat == TREE_DUPLICATE) {
-                    printf("\nkey %zu - duplicate, line %zu\n", key, line_number - 1);
-                    free(info_ptr);
-                }
+        if (StrToZu(buffer, &info_val) != INPUT_OK) {
+            printf("\nerror format (info): line %zu\n", line_number);
+            free(buffer);
+            continue;
+        }
+        size_t *info_ptr = (size_t *)calloc(1, sizeof(size_t));
+        if (info_ptr) {
+            *info_ptr = info_val;
+            TreeStatus stat = TreeInsert(tree, key, info_ptr);
+            if (stat == TREE_DUPLICATE) {
+                printf("\nkey %zu - duplicate, line %zu\n", key, line_number - 1);
             }
+            free(info_ptr);
         }
         free(buffer);
     }
     fclose(file);
     return TREE_OK;
 }
+
+static void node_export(Node *node, void *context) {
+    if (!node) {
+        return;
+    }
+    FILE *file = (FILE *)context;
+    // Записываем ключ и значение на разных строках, как требует формат
+    fprintf(file, "%zu\n%zu\n", node->key, *(node->info));
+}
+
+TreeStatus TreeExport(Tree *tree, const char *filename) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        return TREE_NOT_FOUND;
+    }
+    // Записываем магическое слово
+    fprintf(file, "%s\n", MAGIC_WORD);
+    // Нам нужен Pre-order, чтобы дерево восстановилось 1 в 1.
+    // Если твой универсальный обход это умеет — используй его.
+    // Если нет — вот простой итеративный Pre-order на стеке:
+    Stack *stack = StackCreate();
+    if (tree->root) {
+        StackPush(stack, tree->root);
+    }
+    while (!IsEmpty(stack)) {
+        Node *cur = (Node *)StackPop(stack);
+        node_export(cur, file);
+        if (cur->relatives[RIGHT]) {
+            StackPush(stack, cur->relatives[RIGHT]);
+        }
+        if (cur->relatives[LEFT]) {
+            StackPush(stack, cur->relatives[LEFT]);
+        }
+    }
+    StackFree(stack);
+    fclose(file);
+    return TREE_OK;
+}
+

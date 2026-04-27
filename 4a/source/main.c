@@ -13,14 +13,14 @@ int main() {
     }
     char *conditions[] = {"OK", "NOT VALID", "MEMORY ERROR", "NOT_FOUND", "TREE EMPTY", "INPUT_END"};
     FunctionArray cur = NULL;
-    FunctionArray FuncArray[] = {DoInsert, DoFindKey, DoFindRelease, DoSpecialSearch, DoDeleteKey, DoOutput, ProgramEnd};
+    FunctionArray FuncArray[] = {DoInsert, DoFindKey, DoFindRelease, DoImport, DoExport, DoSpecialSearch, DoGraphviz, DoDeleteKey, DoOutput, ProgramEnd};
     TreeStatus stat = TREE_OK;
     int option = 0;
     InputStatus inp_stat = INPUT_OK;
     while (cur != ProgramEnd && stat != TREE_MEMORY_ERROR) {
         menu_print();
         printf("select an option:\n");
-        inp_stat = GetInt(&option, 1, 7);
+        inp_stat = GetInt(&option, 0, 9);
         if (inp_stat != INPUT_OK) {
             printf("\nINPUT END\n\n");
             break;
@@ -40,11 +40,14 @@ int main() {
 }
 
 void menu_print() {
+    printf("0: program end\n");
     printf("1: element insert\n");
     printf("2: find element by key\n");
     printf("3: find key release (version)\n");
-    printf("4: special search (max delta)\n");
-    printf("5: delete key\n");
-    printf("6: tree output\n");
-    printf("7: program end\n");
+    printf("4: tree import\n");
+    printf("5: tree export\n");
+    printf("6: special search (max delta)\n");
+    printf("7: tree graphviz\n");
+    printf("8: delete key\n");
+    printf("9: tree output\n");
 }

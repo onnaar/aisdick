@@ -15,7 +15,7 @@ InputStatus GetInt(int *const, int, int);
 InputStatus GetSizeT(size_t *const);
 InputStatus GetString(char **const);
 char *my_strtok(char *, const char *);
-char *my_readline(FILE *, const char *); 
+char *my_readline(FILE *); 
 InputStatus StrToZu(const char *const str, size_t *num);
 
 
