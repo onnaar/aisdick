@@ -132,25 +132,7 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
 }
 
 TreeStatus DoGraphviz(Tree *const tree) {
-    if (!tree) {
-        return TREE_NOT_VALID;
-    }
-    printf("enter filename for PNG image: ");
-    char *filename = my_readline(stdin);
-    if (!filename) {
-        return TREE_NOT_VALID;
-    }
-    TreeStatus status = TreeGraphviz(tree, filename);
-    if (status == TREE_OK) {
-        printf("Success: tree visualization saved to '%s'\n", filename);
-        // По желанию можно сразу открыть файл в Linux (Debian)
-        char view_command[512];
-        sprintf(view_command, "xdg-open %s &", filename);
-        system(view_command);
-    } else {
-        printf("error\n");
-    }
-    free(filename);
+    (void)tree;
     return TREE_OK;
 }
 

@@ -13,7 +13,7 @@ int main() {
     }
     char *conditions[] = {"OK", "NOT VALID", "MEMORY ERROR", "NOT_FOUND", "TREE EMPTY", "INPUT_END"};
     FunctionArray cur = NULL;
-    FunctionArray FuncArray[] = {DoInsert, DoFindKey, DoFindRelease, DoImport, DoExport, DoSpecialSearch, DoGraphviz, DoDeleteKey, DoOutput, ProgramEnd};
+    FunctionArray FuncArray[] = {ProgramEnd, DoInsert, DoFindKey, DoFindRelease, DoImport, DoExport, DoSpecialSearch, DoGraphviz, DoDeleteKey, DoOutput};
     TreeStatus stat = TREE_OK;
     int option = 0;
     InputStatus inp_stat = INPUT_OK;
@@ -25,7 +25,7 @@ int main() {
             printf("\nINPUT END\n\n");
             break;
         }
-        cur = FuncArray[option - 1];
+        cur = FuncArray[option];
         stat = cur(tree);
         printf("\n%s\n\n", conditions[stat]);
         if (stat == TREE_END) {
