@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <graphviz/gvc.h>
 #include "input.h"
 #include "tree.h"
 #include "stack.h"
@@ -475,3 +476,63 @@ TreeStatus TreeExport(Tree *tree, const char *filename) {
     return TREE_OK;
 }
 
+static void node_to_gvc_record(Node *node, void *context) {
+    if (!node || !context) {
+        return;
+    }
+    Agraph_t *graph = (Agraph_t *)context;
+    char parent_name[32];
+    sprintf(parent_name, "%zu", node->key);
+    Agnode_t *parent_gnode = agnode(graph, parent_name, 1);
+    char label[128];
+    sprintf(label, "{<k>%zu|{<l>|<r>}}", node->key);
+    agsafeset(parent_gnode, "label", label, "");
+    if (node->relatives[LEFT]) {
+        char left_name[32];
+        sprintf(left_name, "%zu", node->relatives[LEFT]->key);
+        Agnode_t *left_gnode = agnode(graph, left_name, 1);
+        Agedge_t *edge = agedge(graph, parent_gnode, left_gnode, 0, 1);
+        agsafeset(edge, "tailport", "l", "");
+    }
+    if (node->relatives[RIGHT]) {
+        char right_name[32];
+        sprintf(right_name, "%zu", node->relatives[RIGHT]->key);
+        Agnode_t *right_gnode = agnode(graph, right_name, 1);
+        Agedge_t *edge = agedge(graph, parent_gnode, right_gnode, 0, 1);
+        agsafeset(edge, "tailport", "r", "");
+    }
+}
+
+TreeStatus TreeGraphviz(Tree *tree, const char *filename) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    if (!tree->root) {
+        return TREE_EMPTY;
+    }
+    GVC_t *gvc = gvContext();
+    if (!gvc) {
+        return TREE_MEMORY_ERROR;
+    }
+    Agraph_t *graph = agopen("Tree", Agdirected, 0);
+    if (!graph) {
+        gvFreeContext(gvc);
+        return TREE_MEMORY_ERROR;
+    }
+    agattr(graph, AGNODE, "shape", "record");
+    agattr(graph, AGNODE, "fontname", "Arial");
+    TreeTraversing(tree, node_to_gvc_record, graph);
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        agclose(graph);
+        gvFreeContext(gvc);
+        return TREE_NOT_FOUND;
+    }
+    gvLayout(gvc, graph, "dot");
+    gvRender(gvc, graph, "png", file);
+    fclose(file);
+    gvFreeLayout(gvc, graph);
+    agclose(graph);
+    gvFreeContext(gvc);
+    return TREE_OK;
+}

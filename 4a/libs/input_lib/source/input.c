@@ -11,7 +11,8 @@ InputStatus GetInt(int *const num, int min, int max) {
         return INPUT_ERR;
     }
     int x = 0;
-    char ch = '0', f_ch = '0';
+    char ch = '0';
+    int f_ch = '0';
     while (ch != '\n') {
         printf("enter the number: ");
         f_ch = getchar();
@@ -58,7 +59,8 @@ InputStatus GetSizeT(size_t *const num) {
     }
     int x = 0;
     long long fake_num = 0;
-    char ch = '0', f_ch = '0';
+    char ch = '0';
+    int f_ch = '0';
     while (ch != '\n') {
         printf("enter the number: ");
         f_ch = getchar();
@@ -106,7 +108,8 @@ InputStatus GetString(char **const str) {
         return INPUT_ERR;
     }
     int x = 0;
-    char ch = '0', f_ch = '0';
+    char ch = '0';
+    int f_ch = '0';
     while (ch != '\n') {
         printf("enter the line: ");
         f_ch = getchar();

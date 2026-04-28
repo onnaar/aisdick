@@ -131,8 +131,29 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
     return TREE_OK;
 }
 
-TreeStatus DoGraphviz(Tree *const tree) {
-    (void)tree;
+TreeStatus DoGraphviz(Tree *tree) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    printf("Enter filename for PNG image: ");
+    char *filename = my_readline(stdin);
+    if (!filename) {
+        return TREE_MEMORY_ERROR;
+    }
+    TreeStatus status = TreeGraphviz(tree, filename);
+    if (status == TREE_OK) {
+        printf("Success: tree visualization saved to '%s'\n", filename);
+        char view_command[512];
+        sprintf(view_command, "xdg-open %s &", filename);
+        if (system(view_command) != 0) {
+            printf("Note: image saved, but could not be opened automatically.\n");
+        }
+    } else if (status == TREE_EMPTY) {
+        printf("Error: tree is empty.\n");
+    } else {
+        printf("Error: visualization failed.\n");
+    }
+    free(filename);
     return TREE_OK;
 }
 

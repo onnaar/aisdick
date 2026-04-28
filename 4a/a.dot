@@ -1,7 +1,0 @@
-digraph b {
-    ordering="out";
-    node [shape=circle, fontname="Times New Roman"];
-    25 -> 25;
-    30 -> 30;
-    20 -> 20;
-}
