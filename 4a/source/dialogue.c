@@ -41,7 +41,7 @@ TreeStatus DoFindKey(Tree *const tree) {
     if (!res) {
         return TREE_NOT_FOUND;
     }
-    printf("Found Node - Key: %zu, Info: %zu\n", res->key, *(res->info));
+    printf("\nFound Node - Key: %zu, Info: %zu\n", res->key, *(res->info));
     return TREE_OK;
 }
 
@@ -65,7 +65,7 @@ TreeStatus DoFindRelease(Tree *const tree) {
     if (!res) {
         return TREE_NOT_FOUND;
     }
-    printf("Found Release - Key: %zu, Info: %zu\n", res->node_array[0]->key, *(res->node_array[0]->info));
+    printf("\nFound Release - Key: %zu, Info: %zu\n", res->node_array[0]->key, *(res->node_array[0]->info));
     NodeArrayManage(res, 0); 
     return TREE_OK;
 }
@@ -123,7 +123,7 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
         SpSearchStructureDelete(res);
         return TREE_NOT_FOUND;
     }
-    printf("Max delta: %zu\n", res->max_delta);
+    printf("\nMax delta: %zu\n", res->max_delta);
     for (size_t i = 0; i < res->array->size; i++) {
         printf("Special Node[%zu] - Key: %zu, Info: %zu\n", i, res->array->node_array[i]->key, *(res->array->node_array[i]->info));
     }
@@ -132,28 +132,7 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
 }
 
 TreeStatus DoGraphviz(Tree *tree) {
-    if (!tree) {
-        return TREE_NOT_VALID;
-    }
-    printf("Enter filename for PNG image: ");
-    char *filename = my_readline(stdin);
-    if (!filename) {
-        return TREE_MEMORY_ERROR;
-    }
-    TreeStatus status = TreeGraphviz(tree, filename);
-    if (status == TREE_OK) {
-        printf("Success: tree visualization saved to '%s'\n", filename);
-        char view_command[512];
-        sprintf(view_command, "xdg-open %s &", filename);
-        if (system(view_command) != 0) {
-            printf("Note: image saved, but could not be opened automatically.\n");
-        }
-    } else if (status == TREE_EMPTY) {
-        printf("Error: tree is empty.\n");
-    } else {
-        printf("Error: visualization failed.\n");
-    }
-    free(filename);
+    (void)tree;
     return TREE_OK;
 }
 

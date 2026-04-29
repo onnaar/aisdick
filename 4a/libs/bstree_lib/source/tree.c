@@ -306,83 +306,6 @@ void SpSearchStructureDelete(SpSearchStructure *data) {
     free(data);
 }
 
-TreeStatus TreeOutput(Tree *tree) {
-    if (!tree) {
-        return TREE_NOT_VALID;
-    }
-    if (!tree->root) {
-        return TREE_EMPTY;
-    }
-    Stack *stack = StackCreate();
-    if (!stack) {
-        return TREE_MEMORY_ERROR;
-    }
-    PrintStackItem *root_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
-    if (!root_item) {
-        StackFree(stack);
-        return TREE_MEMORY_ERROR;
-    }
-    root_item->node = tree->root;
-    root_item->is_last_child = true;
-    StackPush(stack, root_item);
-    while (!IsEmpty(stack)) {
-        PrintStackItem *current_item = (PrintStackItem *)StackPop(stack);
-        Node *current_node = current_item->node;
-        size_t current_depth = current_item->depth;
-        bool is_last_child = current_item->is_last_child;
-        if (current_depth > 0) {
-            for (size_t i = 1; i < current_depth; i++) {
-                if (current_item->line_history[i]) {
-                    printf("\t");
-                } else {
-                    printf("│   ");
-                }
-            }
-            printf("%s", is_last_child ? "└── " : "├── ");
-        }
-        printf("[%zu:%zu]\n", current_node->key, *(current_node->info));
-        Node *left_node = current_node->relatives[LEFT];
-        Node *right_node = current_node->relatives[RIGHT];
-        if (right_node) {
-            PrintStackItem *right_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
-            if (right_item) {
-                right_item->node = right_node;
-                right_item->depth = current_depth + 1;
-                right_item->is_last_child = true;
-                for (size_t i = 1; i < current_depth; i++) {
-                    right_item->line_history[i] = current_item->line_history[i];
-                }
-                if (current_depth < MAX_PRINT_DEPTH) {
-                    right_item->line_history[current_depth] = is_last_child;
-                }
-                StackPush(stack, right_item);
-            }
-        }
-        // additional func to make it easier
-        if (left_node) {
-            PrintStackItem *left_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
-            if (left_item) {
-                left_item->node = left_node;
-                left_item->depth = current_depth + 1;
-                left_item->is_last_child = (right_node == NULL) ? true : false;
-                for (size_t i = 1; i < current_depth; i++) {
-                    left_item->line_history[i] = current_item->line_history[i];
-                }
-                if (current_depth < MAX_PRINT_DEPTH) {
-                    left_item->line_history[current_depth] = is_last_child;
-                }
-                StackPush(stack, left_item);
-            }
-        }
-        /*for (int i = 0; i < MAX_PRINT_DEPTH; i++) {
-            printf("%d ", current_item->line_history[i]);
-        }
-        printf("\n");*/
-        free(current_item);
-    }
-    StackFree(stack);
-    return TREE_OK;
-}
 
 TreeStatus TreeImport(Tree *const tree, const char *const filename) {
     if (!tree) {
@@ -440,7 +363,6 @@ static void node_export(Node *node, void *context) {
         return;
     }
     FILE *file = (FILE *)context;
-    // Записываем ключ и значение на разных строках, как требует формат
     fprintf(file, "%zu\n%zu\n", node->key, *(node->info));
 }
 
@@ -452,11 +374,7 @@ TreeStatus TreeExport(Tree *tree, const char *filename) {
     if (!file) {
         return TREE_NOT_FOUND;
     }
-    // Записываем магическое слово
     fprintf(file, "%s\n", MAGIC_WORD);
-    // Нам нужен Pre-order, чтобы дерево восстановилось 1 в 1.
-    // Если твой универсальный обход это умеет — используй его.
-    // Если нет — вот простой итеративный Pre-order на стеке:
     Stack *stack = StackCreate();
     if (tree->root) {
         StackPush(stack, tree->root);
@@ -476,63 +394,14 @@ TreeStatus TreeExport(Tree *tree, const char *filename) {
     return TREE_OK;
 }
 
-static void node_to_gvc_record(Node *node, void *context) {
-    if (!node || !context) {
-        return;
-    }
-    Agraph_t *graph = (Agraph_t *)context;
-    char parent_name[32];
-    sprintf(parent_name, "%zu", node->key);
-    Agnode_t *parent_gnode = agnode(graph, parent_name, 1);
-    char label[128];
-    sprintf(label, "{<k>%zu|{<l>|<r>}}", node->key);
-    agsafeset(parent_gnode, "label", label, "");
-    if (node->relatives[LEFT]) {
-        char left_name[32];
-        sprintf(left_name, "%zu", node->relatives[LEFT]->key);
-        Agnode_t *left_gnode = agnode(graph, left_name, 1);
-        Agedge_t *edge = agedge(graph, parent_gnode, left_gnode, 0, 1);
-        agsafeset(edge, "tailport", "l", "");
-    }
-    if (node->relatives[RIGHT]) {
-        char right_name[32];
-        sprintf(right_name, "%zu", node->relatives[RIGHT]->key);
-        Agnode_t *right_gnode = agnode(graph, right_name, 1);
-        Agedge_t *edge = agedge(graph, parent_gnode, right_gnode, 0, 1);
-        agsafeset(edge, "tailport", "r", "");
-    }
-}
-
-TreeStatus TreeGraphviz(Tree *tree, const char *filename) {
+TreeStatus TreeOutput(Tree *tree) {
     if (!tree) {
-        return TREE_NOT_VALID;
+        TREE_NOT_FOUND;
     }
     if (!tree->root) {
-        return TREE_EMPTY;
+        TREE_EMPTY;
     }
-    GVC_t *gvc = gvContext();
-    if (!gvc) {
-        return TREE_MEMORY_ERROR;
-    }
-    Agraph_t *graph = agopen("Tree", Agdirected, 0);
-    if (!graph) {
-        gvFreeContext(gvc);
-        return TREE_MEMORY_ERROR;
-    }
-    agattr(graph, AGNODE, "shape", "record");
-    agattr(graph, AGNODE, "fontname", "Arial");
-    TreeTraversing(tree, node_to_gvc_record, graph);
-    FILE *file = fopen(filename, "w");
-    if (!file) {
-        agclose(graph);
-        gvFreeContext(gvc);
-        return TREE_NOT_FOUND;
-    }
-    gvLayout(gvc, graph, "dot");
-    gvRender(gvc, graph, "png", file);
-    fclose(file);
-    gvFreeLayout(gvc, graph);
-    agclose(graph);
-    gvFreeContext(gvc);
-    return TREE_OK;
+    Node *cur = tree->root;
+    PrintStackItem *stack; 
+    return TREE_OK; 
 }
