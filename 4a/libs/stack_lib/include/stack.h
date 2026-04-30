@@ -12,10 +12,11 @@ typedef enum {
 
 typedef struct Stack Stack;
 
-Stack *StackCreate(void);
+Stack *StackCreate();
 
 StackStatus StackPush(Stack *const stack, void *data);
 void *StackPop(Stack *const stack);
+StackStatus StackMemoryManage(Stack *const stack);
 bool IsEmpty(const Stack *const stack);
 
 void StackFree(Stack *stack);

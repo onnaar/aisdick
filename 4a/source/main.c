@@ -11,7 +11,7 @@ int main() {
     if (!tree) {
         return 666;
     }
-    char *conditions[] = {"OK", "NOT VALID", "MEMORY ERROR", "NOT_FOUND", "TREE EMPTY", "INPUT_END"};
+    char *conditions[] = {"OK", "NOT VALID", "MEMORY ERROR", "NOT_FOUND", "TREE EMPTY", "INPUT END", "WRONG FORMAT"};
     FunctionArray cur = NULL;
     FunctionArray FuncArray[] = {ProgramEnd, DoInsert, DoFindKey, DoFindRelease, DoImport, DoExport, DoSpecialSearch, DoGraphviz, DoDeleteKey, DoOutput};
     TreeStatus stat = TREE_OK;
@@ -31,7 +31,9 @@ int main() {
         if (stat == TREE_END) {
             break;
         }
-        TreeOutput(tree);
+        if (cur != DoGraphviz) {
+            TreeOutput(tree);
+        }
         printf("\n");
     }
     TreeTraversing(tree, Delete, NULL);

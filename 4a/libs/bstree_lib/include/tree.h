@@ -1,7 +1,7 @@
 #ifndef TREE_H
 #define TREE_H
 
-#define MAX_PRINT_DEPTH 128
+#define MAX_PRINT_DEPTH 256
 
 #include <stdbool.h>
 #include "node.h"
@@ -20,7 +20,7 @@ typedef enum {
 typedef struct {
     Node *node;
     size_t depth;
-    bool line_history[MAX_PRINT_DEPTH]; 
+    bool level_history[MAX_PRINT_DEPTH]; 
     bool is_last_child;
 } PrintStackItem;
 
@@ -38,24 +38,31 @@ Tree *TreeCreate();
 
 TreeStatus TreeInsert(Tree *tree, size_t key, size_t *value);
 TreeStatus TreeKeyDelete(Tree *tree, size_t key);
+SpSearchStructure *SpSearchStructureCreate();
+void SpSearchStructureDelete(SpSearchStructure *data);
+
 Node *FindKey(Tree *tree, size_t key);
 NodeArray *FindKeyRelease(Tree *tree, size_t key, size_t release);
+
 void Output(Node *cur, void *context);
 void NodeArrayAdd(NodeArray *array, Node *node);
 void AllSpecialNodes(Node *cur, void *context);
 void Delete(Node *cur, void *context);
 void Special(Node *cur, void *context);
+
 TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), void *context);
 SpSearchStructure *SpecialSearch(Tree *tree, size_t info);
+
 TreeStatus TreeImport(Tree *const tree, const char *const filename);
+TreeStatus TreeExport(Tree *tree, const char *filename);
+TreeStatus TreeExportDot(Tree *tree, const char *filename);
+
 Node *FindMinKey(Node *node);
 Node *FindNextKey(Tree *tree, size_t key);
+
+
 TreeStatus TreeOutput(Tree *tree);
 
-void SpSearchStructureDelete(SpSearchStructure *data);
-//void TreeDelete(Tree *tree);
 
-TreeStatus TreeExport(Tree *tree, const char *filename);
-TreeStatus TreeGraphviz(Tree *tree, const char *filename);
 
 #endif

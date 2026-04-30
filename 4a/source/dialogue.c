@@ -75,7 +75,7 @@ TreeStatus DoImport(Tree *const tree) {
         return TREE_NOT_VALID;
     }
     char *filename = NULL;
-    printf("enter name of the file regarding current directory:\n");
+    printf("enter name of the file regarding project root directory:\n");
     InputStatus stat = GetString(&filename);
     if (stat != INPUT_OK) {
         free(filename);
@@ -83,10 +83,7 @@ TreeStatus DoImport(Tree *const tree) {
     }
     TreeStatus proc_stat = TreeImport(tree, filename);
     free(filename);
-    if (proc_stat != TREE_OK) {
-        return proc_stat;
-    }
-    return TREE_OK;
+    return proc_stat;
 }
 
 TreeStatus DoExport(Tree *const tree) {
@@ -94,7 +91,7 @@ TreeStatus DoExport(Tree *const tree) {
         return TREE_NOT_VALID;
     }
     char *filename = NULL;
-    printf("enter name of the file regarding current directory:\n");
+    printf("enter name of the file regarding project root directory:\n");
     InputStatus stat = GetString(&filename);
     if (stat != INPUT_OK) {
         free(filename);
@@ -132,7 +129,21 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
 }
 
 TreeStatus DoGraphviz(Tree *tree) {
-    (void)tree;
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    char *filename = NULL;
+    printf("enter name of the file regarding project root directory:\n");
+    InputStatus stat = GetString(&filename);
+    if (stat != INPUT_OK) {
+        free(filename);
+        return TREE_END;
+    }
+    TreeExportDot(tree, filename);
+    char command[1024] = {};
+    sprintf(command, "dot -Tpng %s -o image/tree.png && kitten icat image/tree.png", filename);
+    system(command);
+    free(filename);
     return TREE_OK;
 }
 
