@@ -37,7 +37,7 @@ typedef struct {
 
 Tree *TreeCreate();
 
-TreeStatus TreeInsert(Tree *tree, size_t key, size_t *value);
+TreeStatus TreeInsert(Tree *tree, size_t key, NodeInfo *value);
 TreeStatus TreeKeyDelete(Tree *tree, size_t key);
 SpSearchStructure *SpSearchStructureCreate();
 void SpSearchStructureDelete(SpSearchStructure *data);
@@ -45,7 +45,6 @@ void SpSearchStructureDelete(SpSearchStructure *data);
 NodeArray *FindKey(Tree *tree, size_t key);
 Node *FindKeyRelease(Tree *tree, size_t key, size_t release);
 
-void Output(Node *cur, void *context);
 void NodeArrayAdd(NodeArray *array, Node *node);
 void AllSpecialNodes(Node *cur, void *context);
 void Delete(Node *cur, void *context);
@@ -61,9 +60,6 @@ TreeStatus TreeExportDot(Tree *tree, const char *filename);
 Node *FindMinKey(Node *node);
 Node *FindNextKey(Tree *tree, size_t key);
 
-
 TreeStatus TreeOutput(Tree *tree);
-
-
 
 #endif

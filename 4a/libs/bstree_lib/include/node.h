@@ -5,11 +5,15 @@
 
 typedef enum {
     LEFT = 0,
-    RIGHT,
-    PARENT
+    RIGHT = 1,
+    PARENT = 2
 } RelativeIndex; 
 
-typedef struct NodeArray{
+typedef struct NodeInfo {
+    size_t info;
+} NodeInfo;
+
+typedef struct NodeArray {
     struct Node **node_array;
     size_t size;
     size_t capacity;
@@ -18,10 +22,10 @@ typedef struct NodeArray{
 typedef struct Node {
     struct Node *relatives[3];
     size_t key;
-    size_t *info;
+    NodeInfo *info;
 } Node;
 
-Node *NodeCreate(Node *parent, size_t key, size_t *info);
+Node *NodeCreate(Node *parent, size_t key, NodeInfo *info);
 NodeArray *NodeArrayCreate();
 
 NodeArray *NodeArraySizeAppend(NodeArray *array);

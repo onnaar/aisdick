@@ -2,7 +2,7 @@
 #include "node.h"
 #include "tree.h"
 
-Node *NodeCreate(Node *parent, size_t key, size_t *info) {
+Node *NodeCreate(Node *parent, size_t key, NodeInfo *info) {
     if (!info) {
         return NULL;
     }
@@ -12,7 +12,7 @@ Node *NodeCreate(Node *parent, size_t key, size_t *info) {
     }
     node->relatives[PARENT] = parent;
     node->key = key;
-    size_t *new_info = (size_t *)calloc(1, sizeof(size_t));
+    NodeInfo *new_info = (NodeInfo *)calloc(1, sizeof(NodeInfo));
     if (!new_info) {
         return NULL;
     };

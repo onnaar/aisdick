@@ -22,7 +22,7 @@ TreeStatus DoInsert(Tree *const tree) {
     if (stat != INPUT_OK) {
         return TREE_END;
     }
-    TreeStatus proc_stat = TreeInsert(tree, key, &info_val);
+    TreeStatus proc_stat = TreeInsert(tree, key, (void *)&info_val);
     if (proc_stat != TREE_OK) {
         return proc_stat;
     }
@@ -44,7 +44,7 @@ TreeStatus DoFindKey(Tree *const tree) {
         return TREE_NOT_FOUND;
     }
     for (size_t i = 0; i < res->size; i++) {
-        printf("\nfound node - key: %zu, info: %zu, release: %zu\n", res->node_array[i]->key, *res->node_array[i]->info, i + 1);
+        printf("\nfound node - key: %zu, info: %zu, release: %zu\n", res->node_array[i]->key, res->node_array[i]->info->info, i + 1);
     }
     NodeArrayDelete(res);
     return TREE_OK;
@@ -70,7 +70,7 @@ TreeStatus DoFindRelease(Tree *const tree) {
     if (!res) {
         return TREE_NOT_FOUND;
     }
-    printf("\nfound release - key: %zu, info: %zu\n", res->key, *(res->info));
+    printf("\nfound release - key: %zu, info: %zu\n", res->key, res->info->info);
     return TREE_OK;
 }
 
@@ -126,7 +126,7 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
     }
     printf("\nMax delta: %zu\n", res->max_delta);
     for (size_t i = 0; i < res->array->size; i++) {
-        printf("Special Node[%zu] - Key: %zu, Info: %zu\n", i, res->array->node_array[i]->key, *(res->array->node_array[i]->info));
+        printf("Special Node[%zu] - Key: %zu, Info: %zu\n", i, res->array->node_array[i]->key, res->array->node_array[i]->info->info);
     }
     SpSearchStructureDelete(res);
     return TREE_OK;
@@ -135,6 +135,9 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
 TreeStatus DoGraphviz(Tree *tree) {
     if (!tree) {
         return TREE_NOT_VALID;
+    }
+    if (!tree->root) {
+        return TREE_EMPTY;
     }
     char *filename = NULL;
     printf("enter name of the file regarding project root directory:\n");
