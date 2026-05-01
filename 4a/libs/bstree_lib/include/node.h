@@ -12,6 +12,7 @@ typedef enum {
 typedef struct NodeArray{
     struct Node **node_array;
     size_t size;
+    size_t capacity;
 } NodeArray;
 
 typedef struct Node {
@@ -21,8 +22,13 @@ typedef struct Node {
 } Node;
 
 Node *NodeCreate(Node *parent, size_t key, size_t *info);
+NodeArray *NodeArrayCreate();
+
+NodeArray *NodeArraySizeAppend(NodeArray *array);
+void NodeArrayAdd(NodeArray *array, Node *node);
 Node *NodeCopy(const Node *const node);
-NodeArray *NodeArrayManage(NodeArray *array, size_t count);
+
+void NodeArrayDelete(NodeArray *array);
 void NodeDelete(Node *node);
 
 #endif

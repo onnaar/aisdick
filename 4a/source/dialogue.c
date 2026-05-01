@@ -1,7 +1,9 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "dialogue.h"
 #include "input.h"
+#include "node.h"
 #include "tree.h"
 
 TreeStatus DoInsert(Tree *const tree) {
@@ -37,11 +39,14 @@ TreeStatus DoFindKey(Tree *const tree) {
     if (stat != INPUT_OK) {
         return TREE_END;
     }
-    Node *res = FindKey(tree, key);
+    NodeArray *res = FindKey(tree, key);
     if (!res) {
         return TREE_NOT_FOUND;
     }
-    printf("\nFound Node - Key: %zu, Info: %zu\n", res->key, *(res->info));
+    for (size_t i = 0; i < res->size; i++) {
+        printf("\nfound node - key: %zu, info: %zu, release: %zu\n", res->node_array[i]->key, *res->node_array[i]->info, i + 1);
+    }
+    NodeArrayDelete(res);
     return TREE_OK;
 }
 
@@ -61,12 +66,11 @@ TreeStatus DoFindRelease(Tree *const tree) {
     if (stat != INPUT_OK) {
         return TREE_END;
     }
-    NodeArray *res = FindKeyRelease(tree, key, release);
+    Node *res = FindKeyRelease(tree, key, release);
     if (!res) {
         return TREE_NOT_FOUND;
     }
-    printf("\nFound Release - Key: %zu, Info: %zu\n", res->node_array[0]->key, *(res->node_array[0]->info));
-    NodeArrayManage(res, 0); 
+    printf("\nfound release - key: %zu, info: %zu\n", res->key, *(res->info));
     return TREE_OK;
 }
 

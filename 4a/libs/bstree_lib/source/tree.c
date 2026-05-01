@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <graphviz/gvc.h>
 #include "input.h"
 #include "tree.h"
 #include "node.h"
@@ -13,14 +12,10 @@
 // │ 2502 ├ 251c └ 2514 ─ 2500
 
 Tree *TreeCreate() {
-    Tree *tree = (Tree *)calloc(1, sizeof(Tree));
-    if (!tree) {
-        return NULL;
-    }
-    return tree;
+     return (Tree *)calloc(1, sizeof(Tree));
 }
 
-Node *FindKey(Tree *tree, size_t key) {
+/*Node *FindKey(Tree *tree, size_t key) {
     if (!tree) {
         return NULL;
     }
@@ -34,7 +29,7 @@ Node *FindKey(Tree *tree, size_t key) {
         cur = cur->relatives[index];
     }
     return cur;
-}
+}*/
 
 Node *FindMinKey(Node *node) {
     if (!node) {
@@ -84,18 +79,7 @@ TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
     RelativeIndex index = LEFT;
     while (cur) {
         prev = cur;
-        if (key > cur->key) {
-            index = RIGHT;
-        } else if (key < cur->key) {
-            index = LEFT;
-        } else { 
-            while (cur && key == cur->key) {
-                prev = cur;
-                cur = cur->relatives[RIGHT];
-            }
-            index = RIGHT;
-            break;
-        }
+        index = (key >= cur->key) ? RIGHT : LEFT;
         cur = cur->relatives[index];
     }
     Node *temp = NodeCreate(prev, key, info);
@@ -106,14 +90,7 @@ TreeStatus TreeInsert(Tree *tree, size_t key, size_t *info) {
        tree->root = temp;
        return TREE_OK;
     }
-    if (cur) {
-        prev->relatives[RIGHT] = temp;
-        temp->relatives[RIGHT] = cur;
-        temp->relatives[PARENT] = prev;
-        cur->relatives[PARENT] = temp;
-    } else {
-        prev->relatives[index] = temp;
-    }
+    prev->relatives[index] = temp;
     return TREE_OK;
 }
 
@@ -121,7 +98,7 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     if (!tree) {
         return TREE_NOT_VALID;
     }
-    Node *target = FindKey(tree, key);
+    Node *target = FindKeyRelease(tree, key, 1);
     if (!target) {
         return TREE_NOT_FOUND;
     }
@@ -153,7 +130,9 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     }
     Node *successor = FindNextKey(tree, key);
     target->key = successor->key;
-    target->info = successor->info;
+    if (target->info && successor->info) {
+        *target->info = *successor->info;
+    }
     index = ((successor->relatives[PARENT]->relatives[LEFT] == successor) ? LEFT : RIGHT);
     successor->relatives[PARENT]->relatives[index] = successor->relatives[RIGHT];
     if (successor->relatives[RIGHT]) {
@@ -163,32 +142,42 @@ TreeStatus TreeKeyDelete(Tree *tree, size_t key) {
     return TREE_OK;
 }
 
-NodeArray *FindKeyRelease(Tree *tree, size_t key, size_t release) {
+Node *FindKeyRelease(Tree *tree, size_t key, size_t release) {
     if (!tree) {
         return NULL;
     }
-    Node *cur = FindKey(tree, key);
-    if (!cur) {
-        return NULL;
-    }
-    if (release != 1) {
-        size_t i = 1;
-        for (; cur && cur->key == key && i != release; i++) {
-            cur = cur->relatives[RIGHT];
-        }
-        if (i != release) {
-            return NULL;
-        }
-    }
-    NodeArray *array = NodeArrayManage(NULL, 1);
+    NodeArray *array = FindKey(tree, key);
     if (!array) {
         return NULL;
     }
-    *(array->node_array) = cur;
-    if (!*(array->node_array)) {
+    if (release > array->size) {
         return NULL;
     }
-    array->size = 1;
+    Node *res = array->node_array[release - 1];
+    NodeArrayDelete(array);
+    return res;
+}
+
+NodeArray *FindKey(Tree *tree, size_t key) {
+    if (!tree || !tree->root) {
+        return NULL;
+    }
+    NodeArray *array = NodeArrayCreate();
+    if (!array) {
+        return NULL;
+    }
+    Node *cur = tree->root;
+    RelativeIndex index = LEFT;
+    while (cur) {
+        index = LEFT;
+        if (key >= cur->key) {
+            index = RIGHT;
+        }
+        if (cur->key == key) {
+            NodeArrayAdd(array, cur);
+        }
+        cur = cur->relatives[index];
+    }
     return array;
 }
 
@@ -199,28 +188,15 @@ void Output(Node *cur, void *context) {
 
 void Special(Node *cur, void *context) {
     SpSearchStructure *data = (SpSearchStructure *)context; 
-    size_t cur_info = *(cur->info);
-    size_t delta = (cur_info > data->info) ? (cur_info - data->info) : (data->info - cur_info);
+    size_t delta = (cur->key > data->key) ? (cur->key - data->key) : (data->key - cur->key);
     if (delta > data->max_delta) {
         data->max_delta = delta;
-        data->array->size = 1;
-    } else if (delta == data->max_delta) {
-        data->array->size++;
     }
-}
-
-void NodeArrayAdd(NodeArray *array, Node *node) {
-    if (!array || !node || !array->node_array) {
-        return;
-    }
-    array->node_array[array->size] = node;
-    array->size++;
 }
 
 void AllSpecialNodes(Node *cur, void *context) {
     SpSearchStructure *data = (SpSearchStructure *)context; 
-    size_t cur_info = *(cur->info);
-    size_t delta = (cur_info > data->info) ? (cur_info - data->info) : (data->info - cur_info);
+    size_t delta = (cur->key > data->key) ? (cur->key - data->key) : (data->key - cur->key);
     if (delta == data->max_delta) {
         NodeArrayAdd(data->array, cur);
     }
@@ -260,7 +236,7 @@ TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), 
     return TREE_OK;    
 }
 
-SpSearchStructure *SpecialSearch(Tree *tree, size_t info) {
+SpSearchStructure *SpecialSearch(Tree *tree, size_t key) {
     if (!tree || !tree->root) {
         return NULL;
     }
@@ -268,12 +244,12 @@ SpSearchStructure *SpecialSearch(Tree *tree, size_t info) {
     if (!data) {
         return NULL;
     }
-    data->array = (NodeArray *)calloc(1, sizeof(NodeArray));
+    data->array = NodeArrayCreate();
     if (!data->array) {
         free(data);
         return NULL;
     }
-    data->info = info;
+    data->key = key;
     data->max_delta = 0;
     TreeTraversing(tree, Special, data);
     size_t count = data->array->size;
@@ -306,7 +282,6 @@ void SpSearchStructureDelete(SpSearchStructure *data) {
     }
     free(data);
 }
-
 
 TreeStatus TreeImport(Tree *const tree, const char *const filename) {
     if (!tree) {
@@ -390,12 +365,13 @@ TreeStatus TreeExport(Tree *tree, const char *filename) {
     return TREE_OK;
 }
 
-static void NewChildItem(Stack *stack, PrintStackItem *current_item, Node *child_node, bool is_last) {
+static void NewChildItem(Stack *stack, PrintStackItem *current_item, Node *child_node, bool is_last, RelativeIndex index) {
     if (!child_node) {
         return;
     }
     PrintStackItem *child_item = (PrintStackItem *)calloc(1, sizeof(PrintStackItem));
     if (child_item) {
+        child_item->index = (index == LEFT) ? LEFT : RIGHT;
         child_item->node = child_node;
         child_item->depth = current_item->depth + 1;
         child_item->is_last_child = is_last;
@@ -441,13 +417,16 @@ TreeStatus TreeOutput(Tree *tree) {
                     printf("│   ");
                 }
             }
-            printf("%s", is_last_child ? "└── " : "├── ");
+            char *description = (current_item->index == LEFT) ? "left" : "right";
+            printf("%s%s", is_last_child ? "└── " : "├── ", description);
+        } else {
+            printf("root ");
         }
         printf("[%zu:%zu]\n", current_node->key, *(current_node->info));
         Node *left_node = current_node->relatives[LEFT];
         Node *right_node = current_node->relatives[RIGHT];
-        NewChildItem(stack, current_item, left_node, true);
-        NewChildItem(stack, current_item, right_node, left_node == NULL);
+        NewChildItem(stack, current_item, left_node, true, LEFT);
+        NewChildItem(stack, current_item, right_node, left_node == NULL, RIGHT);
         free(current_item);
     }
     StackFree(stack);
@@ -458,7 +437,9 @@ static void haha(Stack *stack, FILE *file, Node *node, RelativeIndex index) {
     if (!node->relatives[index]) {
         return;
     }
-    fprintf(file, "\tn%zu -> n%zu [label=\"R\"];\n", node->key, node->relatives[index]->key);
+    char *ind = index == RIGHT ? "R" : "L";
+    char *color = index == RIGHT ? "blue" : "red";
+    fprintf(file, "\tn%zu -> n%zu [label=\"%s\", color=\"%s\"];\n", node->key, node->relatives[index]->key, ind, color);
     StackPush(stack, node->relatives[index]);
 }
 
@@ -474,15 +455,15 @@ TreeStatus TreeExportDot(Tree *tree, const char *filename) {
         return TREE_NOT_VALID;
     }
     fprintf(file, "digraph G {\n");
-    fprintf(file, "\tgraph [rankdir=LR, dpi=300, splines=polyline];\n");
+    fprintf(file, "\tgraph [rankdir=LR, dpi=96, splines=polyline];\n");
     fprintf(file, "\tnode [shape=box, style=rounded, fontsize=14];\n");
     Stack *stack = StackCreate();
     StackPush(stack, tree->root);
     while (!IsEmpty(stack)) {
         Node *node = (Node *)StackPop(stack);
         fprintf(file, "\tn%zu [label=\"Ключ: %zu\\nЗначение: %zu\"];\n", node->key, node->key, *(node->info));
-        haha(stack, file, node, LEFT);
         haha(stack, file, node, RIGHT);
+        haha(stack, file, node, LEFT);
     }
     fprintf(file, "}\n");
     StackFree(stack);

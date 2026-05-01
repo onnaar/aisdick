@@ -1,6 +1,6 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include "node.h"
+#include "tree.h"
 
 Node *NodeCreate(Node *parent, size_t key, size_t *info) {
     if (!info) {
@@ -21,27 +21,44 @@ Node *NodeCreate(Node *parent, size_t key, size_t *info) {
     return node;
 }
 
-NodeArray *NodeArrayManage(NodeArray *array, size_t count) {
+NodeArray *NodeArrayCreate() {
+    NodeArray *array = (NodeArray *)calloc(1, sizeof(NodeArray));
     if (!array) {
-        array = (NodeArray *)calloc(1, sizeof(NodeArray));
-        if (!array) {
-            return NULL;
-        }
-        if (count > 0) {
-            array->node_array = (Node **)calloc(count, sizeof(Node *));
-            if (!array->node_array) {
-                free(array);
-                return NULL;
-            }
-        }
-        array->size = count;
-        return array;
+        return NULL;
     }
-    if (array->node_array) {
-        free(array->node_array);
+    array->capacity = 1;
+    array->node_array = (Node **)calloc(1, sizeof(Node *));
+    if (!array->node_array) {
+        return NULL;
     }
-    free(array);
-    return NULL;
+    return array;
+}
+
+NodeArray *NodeArraySizeAppend(NodeArray *array) {
+    if (!array || !array->node_array) {
+        return NULL;
+    }
+    array->capacity *= 2;
+    Node **new_ar = (Node **)realloc(array->node_array, array->capacity * sizeof(Node *));
+    if (!new_ar) {
+        return NULL;
+    }
+    array->node_array = new_ar;
+    return array;
+}
+
+void NodeArrayAdd(NodeArray *array, Node *node) {
+    if (!array || !node || !array->node_array) {
+        return;
+    }
+    if (array->size == array->capacity) {
+        NodeArray *new = NodeArraySizeAppend(array);
+        if (!new) {
+            return;
+        }
+    }
+    array->node_array[array->size] = node;
+    array->size++;
 }
 
 Node *NodeCopy(const Node *const node) {
@@ -55,6 +72,16 @@ Node *NodeCopy(const Node *const node) {
     new->relatives[LEFT] = node->relatives[LEFT];
     new->relatives[RIGHT] = node->relatives[RIGHT];
     return new;
+}
+
+void NodeArrayDelete(NodeArray *array) {
+    if (!array) {
+        return;
+    }
+    if (array->node_array) {
+        free(array->node_array);
+    }
+    free(array);
 }
 
 void NodeDelete(Node *node) {
