@@ -8,7 +8,9 @@
 !README
 
 build
+trash
 image
+trash/
 4a/build/
 4a/image/
 4a/lab4
@@ -20,5 +22,7 @@ image
 *.dot
 *.png
 *.jpg
+*.log
+*.gp
 
 !.gitignore
