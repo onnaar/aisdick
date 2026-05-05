@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include "node.h"
-#include "tree.h"
 
-Node *NodeCreate(Node *parent, size_t key, NodeInfo *info) {
+Node *NodeCreate(Node *const parent, const size_t key, const NodeInfo *const info) {
     if (!info) {
         return NULL;
     }
@@ -12,53 +11,13 @@ Node *NodeCreate(Node *parent, size_t key, NodeInfo *info) {
     }
     node->relatives[PARENT] = parent;
     node->key = key;
-    NodeInfo *new_info = (NodeInfo *)calloc(1, sizeof(NodeInfo));
+    NodeInfo *new_info = NodeInfoCreate();   
     if (!new_info) {
         return NULL;
     };
     *new_info = *info;
     node->info = new_info;
     return node;
-}
-
-NodeArray *NodeArrayCreate() {
-    NodeArray *array = (NodeArray *)calloc(1, sizeof(NodeArray));
-    if (!array) {
-        return NULL;
-    }
-    array->capacity = 1;
-    array->node_array = (Node **)calloc(1, sizeof(Node *));
-    if (!array->node_array) {
-        return NULL;
-    }
-    return array;
-}
-
-NodeArray *NodeArraySizeAppend(NodeArray *array) {
-    if (!array || !array->node_array) {
-        return NULL;
-    }
-    array->capacity *= 2;
-    Node **new_ar = (Node **)realloc(array->node_array, array->capacity * sizeof(Node *));
-    if (!new_ar) {
-        return NULL;
-    }
-    array->node_array = new_ar;
-    return array;
-}
-
-void NodeArrayAdd(NodeArray *array, Node *node) {
-    if (!array || !node || !array->node_array) {
-        return;
-    }
-    if (array->size == array->capacity) {
-        NodeArray *new = NodeArraySizeAppend(array);
-        if (!new) {
-            return;
-        }
-    }
-    array->node_array[array->size] = node;
-    array->size++;
 }
 
 Node *NodeCopy(const Node *const node) {
@@ -74,20 +33,20 @@ Node *NodeCopy(const Node *const node) {
     return new;
 }
 
-void NodeArrayDelete(NodeArray *array) {
-    if (!array) {
-        return;
+NodeInfo *NodeInfoCreate() {
+    return (NodeInfo *)calloc(1, sizeof(NodeInfo));
+}
+
+void NodeInfoDelete(NodeInfo *info) {
+    if (info) {
+        free(info);
     }
-    if (array->node_array) {
-        free(array->node_array);
-    }
-    free(array);
 }
 
 void NodeDelete(Node *node) {
     if (!node) {
         return;
     }
-    free(node->info);
+    NodeInfoDelete(node->info); 
     free(node);
 }

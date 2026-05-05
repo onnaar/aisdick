@@ -8,7 +8,7 @@ ADDITIONAL_INCLUDE_DIR = -I../stack_lib/$(INCLUDE_DIR) -I../input_lib/$(INCLUDE_
 CC = gcc
 LIB = libbstree.so
 CFLAGS += -I$(INCLUDE_DIR) $(ADDITIONAL_INCLUDE_DIR) -fPIC -Wall -Wextra -Werror
-LDFLAGS = -shared -lgvc -lcgraph -lcdt
+LDFLAGS = -shared
 
 OBJECTS = $(patsubst $(SOURCE_DIR)/%.c, $(PROJECT_ROOT_BUILD_DIR)/%.o, $(wildcard $(SOURCE_DIR)/*))
 

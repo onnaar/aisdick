@@ -1,10 +1,7 @@
 #ifndef TREE_H
 #define TREE_H
 
-#define MAX_PRINT_DEPTH 255
-
-#include <stdbool.h>
-#include "node.h"
+#include "nodeArray.h"
 
 typedef enum {
     TREE_OK = 0,
@@ -18,48 +15,33 @@ typedef enum {
 } TreeStatus;
 
 typedef struct {
-    Node *node;
-    size_t depth;
-    RelativeIndex index;
-    bool is_last_child;
-    bool level_history[MAX_PRINT_DEPTH]; 
-} PrintStackItem;
-
-typedef struct {
-    NodeArray *array;
-    size_t key; 
-    size_t max_delta;
-} SpSearchStructure;
-
-typedef struct {
     Node *root;
 } Tree;
 
 Tree *TreeCreate();
 
-TreeStatus TreeInsert(Tree *tree, size_t key, NodeInfo *value);
-TreeStatus TreeKeyDelete(Tree *tree, size_t key);
-SpSearchStructure *SpSearchStructureCreate();
-void SpSearchStructureDelete(SpSearchStructure *data);
+TreeStatus TreeInsert(Tree *const tree, const size_t key, const NodeInfo *const value);
 
-NodeArray *FindKey(Tree *tree, size_t key);
-Node *FindKeyRelease(Tree *tree, size_t key, size_t release);
+NodeArray *FindKey(const Tree *const tree, const size_t key);
+Node *FindKeyRelease(const Tree *const tree, const size_t key, const size_t release);
 
-void NodeArrayAdd(NodeArray *array, Node *node);
+TreeStatus TreeKeyDelete(Tree *const tree, const size_t key);
+
+Node *FindMinKey(Node *node);
+Node *FindNextKey(const Tree *const tree, const size_t key);
+
 void AllSpecialNodes(Node *cur, void *context);
 void Delete(Node *cur, void *context);
 void Special(Node *cur, void *context);
+void Output (Node *cur, void *context);
 
 TreeStatus TreeTraversing(Tree *tree, void (*action)(Node *cur, void *context), void *context);
-SpSearchStructure *SpecialSearch(Tree *tree, size_t key);
+SpSearchStructure *SpecialSearch(Tree *const tree, const size_t key);
 
 TreeStatus TreeImport(Tree *const tree, const char *const filename);
-TreeStatus TreeExport(Tree *tree, const char *filename);
-TreeStatus TreeExportDot(Tree *tree, const char *filename);
+TreeStatus TreeExport(const Tree *tree, const char *const filename);
+TreeStatus TreeExportDot(const Tree *const tree, const char *const filename);
 
-Node *FindMinKey(Node *node);
-Node *FindNextKey(Tree *tree, size_t key);
-
-TreeStatus TreeOutput(Tree *tree);
+TreeStatus TreeOutput(const Tree *const tree);
 
 #endif

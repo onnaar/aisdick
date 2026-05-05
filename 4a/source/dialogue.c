@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "dialogue.h"
@@ -40,7 +39,8 @@ TreeStatus DoFindKey(Tree *const tree) {
         return TREE_END;
     }
     NodeArray *res = FindKey(tree, key);
-    if (!res) {
+    if (!res || res->size == 0) {
+        NodeArrayDelete(res);
         return TREE_NOT_FOUND;
     }
     for (size_t i = 0; i < res->size; i++) {
@@ -124,9 +124,9 @@ TreeStatus DoSpecialSearch(Tree *const tree) {
         SpSearchStructureDelete(res);
         return TREE_NOT_FOUND;
     }
-    printf("\nMax delta: %zu\n", res->max_delta);
+    printf("\nmax delta: %zu\n", res->max_delta);
     for (size_t i = 0; i < res->array->size; i++) {
-        printf("Special Node[%zu] - Key: %zu, Info: %zu\n", i, res->array->node_array[i]->key, res->array->node_array[i]->info->info);
+        printf("special Node[%zu] - key: %zu, info: %zu\n", i, res->array->node_array[i]->key, res->array->node_array[i]->info->info);
     }
     SpSearchStructureDelete(res);
     return TREE_OK;

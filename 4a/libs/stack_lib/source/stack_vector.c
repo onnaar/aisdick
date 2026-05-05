@@ -35,7 +35,7 @@ StackStatus StackMemoryManage(Stack *const stack) {
     return STACK_OK;
 }
 
-StackStatus StackPush(Stack *const stack, void *data) {
+StackStatus StackPush(Stack *const stack, void *const data) {
     if (!stack) {
         return STACK_NULLPTR;
     }

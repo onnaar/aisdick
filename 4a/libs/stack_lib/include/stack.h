@@ -14,7 +14,7 @@ typedef struct Stack Stack;
 
 Stack *StackCreate();
 
-StackStatus StackPush(Stack *const stack, void *data);
+StackStatus StackPush(Stack *const stack, void *const data);
 void *StackPop(Stack *const stack);
 StackStatus StackMemoryManage(Stack *const stack);
 bool IsEmpty(const Stack *const stack);
