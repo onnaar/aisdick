@@ -109,6 +109,17 @@ TreeStatus DoExport(Tree *const tree) {
     return TREE_OK;
 }
 
+TreeStatus DoReverseOutput(Tree *const tree) {
+    if (!tree) {
+        return TREE_NOT_VALID;
+    }
+    TreeStatus stat = TreeTraversing(tree, Output,  NULL);
+    if (stat != TREE_OK) {
+        return stat;
+    }
+    return TREE_OK;
+}
+
 TreeStatus DoSpecialSearch(Tree *const tree) {
     if (!tree) {
         return TREE_NOT_VALID;

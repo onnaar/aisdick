@@ -10,6 +10,7 @@ TreeStatus DoFindKey(Tree *const tree);
 TreeStatus DoFindRelease(Tree *const tree); 
 TreeStatus DoImport(Tree *const tree);
 TreeStatus DoExport(Tree *const tree);
+TreeStatus DoReverseOutput(Tree *const tree); 
 TreeStatus DoSpecialSearch(Tree *const tree);
 TreeStatus DoGraphviz(Tree *const tree);
 TreeStatus DoDeleteKey(Tree *const tree); 

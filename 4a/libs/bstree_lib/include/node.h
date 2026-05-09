@@ -22,6 +22,7 @@ typedef struct Node {
 Node *NodeCreate(Node *const parent, const size_t key, const NodeInfo *const info);
 NodeInfo *NodeInfoCreate();
 
+size_t ChildrenCounter(const Node *const node);
 Node *NodeCopy(const Node *const node);
 
 void NodeInfoDelete(NodeInfo *info);

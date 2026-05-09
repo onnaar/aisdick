@@ -2,6 +2,7 @@
 #include <string.h>
 #include "input.h"
 #include "tree.h"
+#include "node.h"
 #include "nodeArray.h"
 #include "stack.h"
 #include "printItem.h"
@@ -86,7 +87,7 @@ TreeStatus TreeKeyDelete(Tree *const tree, size_t key) {
         return TREE_NOT_FOUND;
     }
     Node *parent = target->relatives[PARENT];
-    if (!target->relatives[LEFT] && !target->relatives[RIGHT]) {
+    if (ChildrenCounter(target) == 0) {
         if (!parent) {
             tree->root = NULL;
         } else {
@@ -96,7 +97,7 @@ TreeStatus TreeKeyDelete(Tree *const tree, size_t key) {
         return TREE_OK;
     }
     RelativeIndex index = LEFT; 
-    if (!target->relatives[LEFT] || !target->relatives[RIGHT]) {
+    if (ChildrenCounter(target) == 1) {
         if (!target->relatives[LEFT]) {
             index = RIGHT;
         }
@@ -125,7 +126,7 @@ TreeStatus TreeKeyDelete(Tree *const tree, size_t key) {
     return TREE_OK;
 }
 
-Node *FindMinKey(Node *node) {
+Node *FindMinKey(Node *const node) {
     if (!node) {
         return NULL;
     }
@@ -205,6 +206,11 @@ void AllSpecialNodes(Node *cur, void *context) {
     if (delta == data->max_delta) {
         NodeArrayAdd(data->array, cur);
     }
+}
+
+void Output(Node *cur, void *context) {
+    (void)context;
+    printf("%zu - %zu\n", cur->key, cur->info->info);
 }
 
 void Delete(Node *cur, void *context) {

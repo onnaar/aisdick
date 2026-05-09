@@ -47,10 +47,13 @@ super :
 run : $(TARGET) 
 	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
 
-graphs:
+graphics:
 	gnuplot -e "type='all'" plot.gp
 	gnuplot -e "type='spec'" plot.gp
 	gnuplot -e "type='traversing'" plot.gp
+
+see:
+	kitten icat graph*.png
 
 clean : 
 	rm -f $(TARGET) *.o

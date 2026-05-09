@@ -20,6 +20,20 @@ Node *NodeCreate(Node *const parent, const size_t key, const NodeInfo *const inf
     return node;
 }
 
+size_t ChildrenCounter(const Node *const node) {
+    if (!node) {
+        return 0;
+    }
+    size_t children_number = 0;
+    if (node->relatives[LEFT]) {
+        children_number++;
+    }
+    if (node->relatives[RIGHT]) {
+        children_number++;
+    }
+    return children_number;
+}
+
 Node *NodeCopy(const Node *const node) {
     if (!node) {
         return NULL;

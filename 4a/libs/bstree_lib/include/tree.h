@@ -27,7 +27,7 @@ Node *FindKeyRelease(const Tree *const tree, const size_t key, const size_t rele
 
 TreeStatus TreeKeyDelete(Tree *const tree, const size_t key);
 
-Node *FindMinKey(Node *node);
+Node *FindMinKey(Node *const node);
 Node *FindNextKey(const Tree *const tree, const size_t key);
 
 void AllSpecialNodes(Node *cur, void *context);

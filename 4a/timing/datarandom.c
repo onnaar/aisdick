@@ -6,21 +6,22 @@
 
 #define START 1
 #define STOP 10
-#define STEP 100000
-#define REPEAT_COUNT 7
-#define BATCH_SIZE 10000
+#define STEP 10000
+#define REPEAT_COUNT 30
+#define BATCH_SIZE 1000
 #define SP_SEARCH_COUNT 100
 #define TRAVERSAL_COUNT 10
 
 double duration(struct timespec start, struct timespec end);
-
 void EmptyAction(Node *cur, void *context);
 
 int main() {
     srand(time(NULL));
     FILE *log_file = fopen("timing_all.txt", "w");
-    if (!log_file) return 1;
-    fprintf(log_file, "#SIZE insert(10k) delete(10k) search(10k) spsearch(100) traversal(10)\n");
+    if (!log_file) {
+        return 1;
+    }
+    fprintf(log_file, "#SIZE insert delete search spsearch traversal\n");
     for (size_t cur = START; cur <= STOP; cur++) {
         Tree *tree = TreeCreate();
         size_t size = cur * STEP;
@@ -34,7 +35,7 @@ int main() {
             all_keys[i] = key;
             free(value);
         }
-        double t_ins = 0, t_del = 0, t_sea = 0, t_sp = 0, t_trav = 0;
+        double t_ins = 0, t_del = 0, t_sea = 0, t_sp = 0, t_tr = 0;
         size_t batch = BATCH_SIZE;
         for (int i = 0; i < REPEAT_COUNT; i++) {
             size_t *ins_k = (size_t *)calloc(batch, sizeof(size_t));
@@ -65,7 +66,9 @@ int main() {
             clock_gettime(CLOCK_MONOTONIC, st_p);
             for (size_t j = 0; j < batch; j++) {
                 NodeArray *found = FindKey(tree, sea_k[j]);
-                if (found) NodeArrayDelete(found);
+                if (found) {
+                    NodeArrayDelete(found);
+                }
             }
             clock_gettime(CLOCK_MONOTONIC, en_p);
             t_sea += duration(st, en);
@@ -73,7 +76,9 @@ int main() {
             for (size_t j = 0; j < SP_SEARCH_COUNT; j++) {
                 SpSearchStructure *sp_res = SpecialSearch(tree, (size_t)rand());
                 if (sp_res) {
-                    if (sp_res->array) NodeArrayDelete(sp_res->array);
+                    if (sp_res->array) {
+                        NodeArrayDelete(sp_res->array);
+                    }
                     free(sp_res);
                 }
             }
@@ -84,7 +89,7 @@ int main() {
                 TreeTraversing(tree, EmptyAction, NULL);
             }
             clock_gettime(CLOCK_MONOTONIC, en_p);
-            t_trav += duration(st, en);
+            t_tr += duration(st, en);
             free(ins_k);
             for (size_t j = 0; j < batch; j++) {
                 free(ins_v[j]);
@@ -93,7 +98,7 @@ int main() {
             free(del_k);
             free(sea_k);
         }
-        fprintf(log_file, "%zu %.7f %.7f %.7f %.7f %.7f\n", size, t_ins/(double)REPEAT_COUNT, t_del/(double)REPEAT_COUNT, t_sea/(double)REPEAT_COUNT, t_sp/(double)REPEAT_COUNT, t_trav/(double)REPEAT_COUNT);
+        fprintf(log_file, "%zu %.7f %.7f %.7f %.7f %.7f\n", size, t_ins/REPEAT_COUNT, t_del/REPEAT_COUNT, t_sea/REPEAT_COUNT, t_sp/REPEAT_COUNT, t_tr/REPEAT_COUNT);
         free(all_keys);
         TreeTraversing(tree, Delete, NULL);
         free(tree);
