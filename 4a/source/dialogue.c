@@ -186,8 +186,15 @@ TreeStatus DoOutput(Tree *const tree) {
     if (!tree) {
         return TREE_NOT_VALID;
     }
-    printf("\n");
-    TreeStatus stat = TreeOutput(tree);
+    int choice = 0;
+    printf("\n1 - info + key, 2 - key, 3 - info\n");
+    InputStatus inp_stat = GetInt(&choice, 1, 3);
+    if (inp_stat != INPUT_OK) {
+        return TREE_END;
+    }
+    OutputType array[] = {NodeToString, NodeKeyToString, NodeInfoToString};
+    OutputType cur_way = array[choice - 1];
+    TreeStatus stat = TreeOutput(tree, cur_way);
     if (stat != TREE_OK) {
         return stat;
     }

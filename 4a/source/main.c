@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "dialogue.h"
 #include "input.h"
+#include "node.h"
 #include "tree.h"
 
 void menu_print();
@@ -31,8 +32,8 @@ int main() {
         if (stat == TREE_END) {
             break;
         }
-        if (cur != DoGraphviz) {
-            TreeOutput(tree);
+        if (((cur == DoGraphviz) + (cur == DoOutput)) == 0) {
+            TreeOutput(tree, NodeToString);
         }
         printf("\n");
     }

@@ -78,6 +78,21 @@ Node *FindKeyRelease(const Tree *const tree, const size_t key, const size_t rele
     return res;
 }
 
+static void TreeTransplant(Tree *const tree, Node *const source, Node *const target) {
+    if (!tree || !source) {
+        return;
+    }
+    if (!source->relatives[PARENT]) {
+        tree->root = target;
+    } else {
+        RelativeIndex index = ((source->relatives[PARENT]->relatives[LEFT] == source) ? LEFT : RIGHT);
+        source->relatives[PARENT]->relatives[index] = target;
+    }
+    if (target) {
+        target->relatives[PARENT] = source->relatives[PARENT];
+    }
+}
+
 TreeStatus TreeKeyDelete(Tree *const tree, size_t key) {
     if (!tree) {
         return TREE_NOT_VALID;
@@ -86,43 +101,23 @@ TreeStatus TreeKeyDelete(Tree *const tree, size_t key) {
     if (!target) {
         return TREE_NOT_FOUND;
     }
-    Node *parent = target->relatives[PARENT];
-    if (ChildrenCounter(target) == 0) {
-        if (!parent) {
-            tree->root = NULL;
-        } else {
-            parent->relatives[key < parent->key ? LEFT : RIGHT] = NULL;
+    if (ChildrenCounter(target) < 2) {
+        Node *children = target->relatives[LEFT] ? target->relatives[LEFT] : target->relatives[RIGHT];
+        TreeTransplant(tree, target, children);
+    } else {
+        Node *successor = FindNextKey(tree, key);
+        if (target->relatives[RIGHT] != successor) {
+            TreeTransplant(tree, successor, successor->relatives[RIGHT]);
+            successor->relatives[RIGHT] = target->relatives[RIGHT];
+            if (successor->relatives[RIGHT]) { 
+                successor->relatives[RIGHT]->relatives[PARENT] = successor;
+            }
         }
-        NodeDelete(target);
-        return TREE_OK;
+        TreeTransplant(tree, target, successor);
+        successor->relatives[LEFT] = target->relatives[LEFT];
+        target->relatives[LEFT]->relatives[PARENT] = successor;
     }
-    RelativeIndex index = LEFT; 
-    if (ChildrenCounter(target) == 1) {
-        if (!target->relatives[LEFT]) {
-            index = RIGHT;
-        }
-        Node *child = target->relatives[index];
-        Node *parent = target->relatives[PARENT];
-        child->relatives[PARENT] = parent;
-        if (!parent) {
-            tree->root = child;
-        } else {
-            parent->relatives[(parent->relatives[LEFT] == target) ? LEFT : RIGHT] = child;
-        }
-        NodeDelete(target);
-        return TREE_OK;
-    }
-    Node *successor = FindNextKey(tree, key);
-    target->key = successor->key;
-    if (target->info && successor->info) {
-        *target->info = *successor->info;
-    }
-    index = ((successor->relatives[PARENT]->relatives[LEFT] == successor) ? LEFT : RIGHT);
-    successor->relatives[PARENT]->relatives[index] = successor->relatives[RIGHT];
-    if (successor->relatives[RIGHT]) {
-        successor->relatives[RIGHT]->relatives[PARENT] = successor->relatives[PARENT];
-    }
-    NodeDelete(successor);
+    NodeDelete(target);
     return TREE_OK;
 }
 
@@ -351,7 +346,7 @@ static void NewChildItem(Stack *const stack, PrintStackItem *const current_item,
     }
 }
 
-TreeStatus TreeOutput(const Tree *const tree) {
+TreeStatus TreeOutput(const Tree *const tree, OutputType formatter) {
     if (!tree) {
         return TREE_NOT_VALID;
     }
@@ -388,7 +383,12 @@ TreeStatus TreeOutput(const Tree *const tree) {
         } else {
             printf("root ");
         }
-        printf("[%zu:%zu]\n", current_node->key, current_node->info->info);
+        char *for_current_output = formatter(current_node);
+        if (!for_current_output) {
+            return TREE_WRONG_FORMAT;
+        }
+        printf("[%s]\n", for_current_output);
+        free(for_current_output);
         Node *left_node = current_node->relatives[LEFT];
         Node *right_node = current_node->relatives[RIGHT];
         NewChildItem(stack, current_item, left_node, true, LEFT);

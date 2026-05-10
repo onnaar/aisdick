@@ -1,4 +1,7 @@
 #include <stdlib.h>
+#include <string.h>
+#include "node_info.h"
+#include "input.h"
 #include "node.h"
 
 Node *NodeCreate(Node *const parent, const size_t key, const NodeInfo *const info) {
@@ -13,6 +16,7 @@ Node *NodeCreate(Node *const parent, const size_t key, const NodeInfo *const inf
     node->key = key;
     NodeInfo *new_info = NodeInfoCreate();   
     if (!new_info) {
+        free(node);
         return NULL;
     };
     *new_info = *info;
@@ -24,14 +28,7 @@ size_t ChildrenCounter(const Node *const node) {
     if (!node) {
         return 0;
     }
-    size_t children_number = 0;
-    if (node->relatives[LEFT]) {
-        children_number++;
-    }
-    if (node->relatives[RIGHT]) {
-        children_number++;
-    }
-    return children_number;
+    return (node->relatives[LEFT] != NULL) + (node->relatives[RIGHT] != NULL);
 }
 
 Node *NodeCopy(const Node *const node) {
@@ -47,20 +44,58 @@ Node *NodeCopy(const Node *const node) {
     return new;
 }
 
-NodeInfo *NodeInfoCreate() {
-    return (NodeInfo *)calloc(1, sizeof(NodeInfo));
-}
-
-void NodeInfoDelete(NodeInfo *info) {
-    if (info) {
-        free(info);
-    }
-}
-
 void NodeDelete(Node *node) {
     if (!node) {
         return;
     }
     NodeInfoDelete(node->info); 
     free(node);
+}
+
+char *NodeInfoToString(const Node *const node) {
+    if (!node || !node->info) {
+        return NULL;
+    }
+    char *res = NULL;
+    if (ZuToStr(node->info->info, &res) != INPUT_OK) {
+        return NULL;
+    }
+    return res;
+}
+
+char *NodeKeyToString(const Node *const node) {
+    if (!node) {
+        return NULL;
+    }
+    char *key_str = NULL;
+    if (ZuToStr(node->key, &key_str) != INPUT_OK) {
+        return NULL;
+    }
+    return key_str;
+}
+
+char *NodeToString(const Node *const node) {
+    if (!node) {
+        return NULL;
+    }
+    char *key_str = NULL;
+    if (ZuToStr(node->key, &key_str) != INPUT_OK) {
+        return NULL;
+    }
+    char *info_str = NodeInfoToString(node);
+    if (!info_str) {
+        free(key_str); 
+        return NULL;
+    }
+    const char *sep = " - ";
+    size_t total_len = strlen(key_str) + strlen(sep) + strlen(info_str);
+    char *result = (char *)calloc(total_len + 1, sizeof(char));
+    if (result) {
+        strcpy(result, key_str);
+        strcat(result, sep);
+        strcat(result, info_str);
+    }
+    free(key_str);
+    free(info_str);
+    return result;
 }

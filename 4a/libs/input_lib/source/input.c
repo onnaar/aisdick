@@ -146,22 +146,46 @@ InputStatus StrToZu(const char *const str, size_t *num) {
         return INPUT_WRONG;
     }
     size_t fake_num = 0, i = 0;
-    char *new_str = strdup(str);
-    if (!new_str) {
-        return INPUT_ERR;
-    }
     bool is_ok = true;
-    while (*(new_str + i) && is_ok) {
-        if (*(new_str + i) >= '0' && *(new_str + i) <= '9') {
-            fake_num = 10 * fake_num + (*(new_str + i) - '0');
+    while (*(str + i) && is_ok) {
+        if (*(str + i) >= '0' && *(str + i) <= '9') {
+            fake_num = 10 * fake_num + (*(str + i) - '0');
         } else {
             is_ok = false;
         }
         i++;
     }
     *num = fake_num;
-    free(new_str);
     return (is_ok ? INPUT_OK : INPUT_WRONG);
+}
+
+InputStatus ZuToStr(const size_t num, char **str) {
+    if (!str) {
+        return INPUT_WRONG;
+    }
+    size_t temp = num;
+    size_t len = (temp == 0) ? 1 : 0;
+    while (temp > 0) {
+        len++;
+        temp /= 10;
+    }
+    char *new_str = (char *)calloc(len + 1, sizeof(char));
+    if (!new_str) {
+        return INPUT_ERR;
+    }
+    temp = num;
+    if (temp == 0) {
+        new_str[0] = '0';
+    } else {
+        size_t i = len;
+        while (i > 0) {
+            *(new_str + i - 1) = (char)((temp % 10) + '0');
+            temp /= 10;
+            i--;
+        }
+    }
+    *str = new_str;
+    return INPUT_OK;
 }
 
 char *my_strtok(char *str, const char *delim) {

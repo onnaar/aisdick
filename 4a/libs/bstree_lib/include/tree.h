@@ -18,6 +18,8 @@ typedef struct {
     Node *root;
 } Tree;
 
+typedef char * (*OutputType)(const Node *const);
+
 Tree *TreeCreate();
 
 TreeStatus TreeInsert(Tree *const tree, const size_t key, const NodeInfo *const value);
@@ -42,6 +44,6 @@ TreeStatus TreeImport(Tree *const tree, const char *const filename);
 TreeStatus TreeExport(const Tree *tree, const char *const filename);
 TreeStatus TreeExportDot(const Tree *const tree, const char *const filename);
 
-TreeStatus TreeOutput(const Tree *const tree);
+TreeStatus TreeOutput(const Tree *const tree, OutputType formatter);
 
 #endif
