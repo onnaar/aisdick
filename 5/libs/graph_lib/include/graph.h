@@ -1,0 +1,50 @@
+#ifndef GRAPH_H
+#define GRAPH_H
+
+#include "hash_table.h"
+#include "vertex.h"
+#include <stddef.h>
+
+#define FNV_OFFSET 14695981039346656037ULL
+#define FNV_PRIME  1099511628211ULL
+#define KNUTH_PRIME 2654435761ULL
+
+typedef enum {
+    GRAPH_OK = 0,
+    GRAPH_NOT_VALID,
+    GRAPH_NOT_FOUND,
+    GRAPH_EMPTY,
+    GRAPH_MEMORY_ERROR,
+    GRAPH_WRONG_FORMAT,
+    GRAPH_END_OF_INPUT,
+    GRAPH_DUPLICATE
+} GraphStatus;
+
+typedef struct Graph {
+    HashTable *data;
+    Vertex **id_table;      
+    size_t vertex_counter;
+    size_t capacity;
+} Graph;
+
+size_t GraphHash1(const void *const key, const size_t capacity);
+size_t GraphHash2(const void *const key, const size_t capacity);
+int GraphComparePoints(const void *const key1, const void *const key2);
+
+Graph *GraphCreate();
+GraphStatus GraphAddVertex(Graph *const graph, const Point coords, const VertexType type);
+GraphStatus GraphAddEdge(Graph *const graph, const Point from_coords, const Neighbours direction);
+GraphStatus GraphRemoveVertex(Graph *const graph, const Point target_coords);
+GraphStatus GraphImport(Graph *const graph, const char *const filename);
+GraphStatus GraphExport(const Graph *const graph, const char *const filename);
+GraphStatus GraphAdjacencyOutput(const Graph *const graph);
+
+Vertex *GraphFindVertexByID(const Graph *const graph, const size_t target_id);
+GraphStatus GraphUpdateVertexByID(Graph *const graph, const size_t target_id, const Point new_coords);
+
+Vertex **ShortestPathDijkstra(const Graph *const graph, const size_t start_id, const size_t finish_id);
+Vertex **BFS(const Graph *const graph, const size_t start_id);
+
+void GraphFree(Graph *const graph);
+
+#endif
