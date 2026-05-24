@@ -33,18 +33,23 @@ int GraphComparePoints(const void *const key1, const void *const key2);
 
 Graph *GraphCreate();
 GraphStatus GraphAddVertex(Graph *const graph, const Point coords, const VertexType type);
-GraphStatus GraphAddEdge(Graph *const graph, const Point from_coords, const Neighbours direction);
-GraphStatus GraphRemoveVertex(Graph *const graph, const Point target_coords);
+GraphStatus GraphAddEdge(Graph *const graph, const size_t id, const Neighbours direction);
+
 GraphStatus GraphImport(Graph *const graph, const char *const filename);
 GraphStatus GraphExport(const Graph *const graph, const char *const filename);
-GraphStatus GraphAdjacencyOutput(const Graph *const graph);
 
-Vertex *GraphFindVertexByID(const Graph *const graph, const size_t target_id);
-GraphStatus GraphUpdateVertexByID(Graph *const graph, const size_t target_id, const Point new_coords);
+Vertex *GraphFindVertex(const Graph *const graph, const size_t target_id);
+GraphStatus GraphUpdateVertex(Graph *const graph, const size_t target_id, const Point new_coords, const VertexType new_type);
 
+GraphStatus GraphMakeMST(Graph *const graph);
 Vertex **ShortestPathDijkstra(const Graph *const graph, const size_t start_id, const size_t finish_id);
 Vertex **BFS(const Graph *const graph, const size_t start_id);
 
+GraphStatus GraphExportDot(const Graph *const graph, const char *const filename, Vertex **const path);
+GraphStatus GraphAdjacencyOutput(const Graph *const graph);
+
+GraphStatus GraphRemoveVertex(Graph *const graph, const size_t id);
+GraphStatus GraphRemoveEdge(Graph *const graph, const size_t id, const Neighbours direction);
 void GraphFree(Graph *const graph);
 
 #endif

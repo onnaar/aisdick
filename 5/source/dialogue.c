@@ -2,10 +2,20 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <string.h>
 #include "dialogue.h"
 #include "graph.h"
 #include "input.h"
 #include "vertex.h"
+
+void ViewGraph(const Graph *const graph, const char *const dot_filename) {
+    if (!graph || graph->vertex_counter == 0) {
+        return;
+    }
+    char command[1024] = {};
+    sprintf(command, "neato -Tpng %s -o image/maze.png && kitten icat image/maze.png", dot_filename);
+    system(command);
+}
 
 GraphStatus DoInsert(Graph *const graph) {
     if (!graph) {
@@ -22,50 +32,24 @@ GraphStatus DoInsert(Graph *const graph) {
     if (GetInt(&type_choice, -1, 1) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
-    GraphStatus proc_stat = GraphAddVertex(graph, coords, (VertexType)type_choice);
-    if (proc_stat != GRAPH_OK) {
-        return proc_stat;
-    }
-    return GRAPH_OK;
+    return GraphAddVertex(graph, coords, (VertexType)type_choice);
 }
 
 GraphStatus DoAddEdge(Graph *const graph) {
     if (!graph) {
         return GRAPH_NOT_VALID;
     }
-    printf("enter the source coordinates (x and y):\n");
-    size_t x = 0, y = 0;
-    if (GetSizeT(&x) != INPUT_OK || GetSizeT(&y) != INPUT_OK) {
+    printf("enter the id:\n");
+    size_t id = 0;
+    if (GetSizeT(&id) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
-    Point from_coords = {x, y};
     printf("enter the direction (0 - UP, 1 - RIGHT, 2 - DOWN, 3 - LEFT):\n");
     int dir_choice = 0;
     if (GetInt(&dir_choice, 0, 3) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
-    GraphStatus proc_stat = GraphAddEdge(graph, from_coords, (Neighbours)dir_choice);
-    if (proc_stat != GRAPH_OK) {
-        return proc_stat;
-    }
-    return GRAPH_OK;
-}
-
-GraphStatus DoDeleteVertex(Graph *const graph) {
-    if (!graph) {
-        return GRAPH_NOT_VALID;
-    }
-    printf("enter target coordinates (x and y):\n");
-    size_t x = 0, y = 0;
-    if (GetSizeT(&x) != INPUT_OK || GetSizeT(&y) != INPUT_OK) {
-        return GRAPH_END_OF_INPUT;
-    }
-    Point target_coords = {x, y};
-    GraphStatus proc_stat = GraphRemoveVertex(graph, target_coords);
-    if (proc_stat != GRAPH_OK) {
-        return proc_stat;
-    }
-    return GRAPH_OK;
+    return GraphAddEdge(graph, id, (Neighbours)dir_choice);
 }
 
 GraphStatus DoUpdateVertex(Graph *const graph) {
@@ -73,21 +57,20 @@ GraphStatus DoUpdateVertex(Graph *const graph) {
         return GRAPH_NOT_VALID;
     }
     printf("enter target vertex id:\n");
-    size_t target_id = 0;
+    size_t target_id = 0, x = 0, y = 0, type = 0;
     if (GetSizeT(&target_id) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
-    printf("enter new coordinates (x and y):\n");
-    size_t x = 0, y = 0;
+    printf("enter new coordinates (x && y):\n");
     if (GetSizeT(&x) != INPUT_OK || GetSizeT(&y) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
-    Point new_coords = {x, y};
-    GraphStatus proc_stat = GraphUpdateVertexByID(graph, target_id, new_coords);
-    if (proc_stat != GRAPH_OK) {
-        return proc_stat;
+    printf("new type of vertex (0 - EXIT, 1 - TRANSITION, 2 - ENTRANCE):\n");
+    if (GetSizeT(&type) != INPUT_OK) {
+        return GRAPH_END_OF_INPUT;
     }
-    return GRAPH_OK;
+    Point new_coords = {x, y};
+    return GraphUpdateVertex(graph, target_id, new_coords, (Neighbours)type - 1);
 }
 
 GraphStatus DoImport(Graph *const graph) {
@@ -119,21 +102,7 @@ GraphStatus DoExport(Graph *const graph) {
     }
     GraphStatus proc_stat = GraphExport(graph, filename);
     free(filename);
-    if (proc_stat != GRAPH_OK) {
-        return proc_stat;
-    }
-    return GRAPH_OK;
-}
-
-GraphStatus DoAdjacencyOutput(Graph *const graph) {
-    if (!graph) {
-        return GRAPH_NOT_VALID;
-    }
-    GraphStatus stat = GraphAdjacencyOutput(graph);
-    if (stat != GRAPH_OK) {
-        return stat;
-    }
-    return GRAPH_OK;
+    return proc_stat;
 }
 
 GraphStatus DoDijkstra(Graph *const graph) {
@@ -154,10 +123,8 @@ GraphStatus DoDijkstra(Graph *const graph) {
     if (!path) {
         return GRAPH_NOT_FOUND;
     }
-    printf("\nshortest path found:\n");
-    for (size_t i = 0; path[i] != NULL; i++) {
-        printf("step [%zu] -> node ID: %zu, coords: (%zu, %zu)\n", i, path[i]->id, path[i]->coords.x, path[i]->coords.y);
-    }
+    GraphExportDot(graph, "maze.dot", path);
+    ViewGraph(graph, "maze.dot");
     free(path);
     return GRAPH_OK;
 }
@@ -175,21 +142,73 @@ GraphStatus DoBFS(Graph *const graph) {
     if (!path) {
         return GRAPH_NOT_FOUND;
     }
-    printf("\nbfs path to exit found:\n");
-    for (size_t i = 0; path[i] != NULL; i++) {
-        printf("node ID: %zu, coords: (%zu, %zu)\n", path[i]->id, path[i]->coords.x, path[i]->coords.y);
-    }
+    GraphExportDot(graph, "maze.dot", path);
+    ViewGraph(graph, "maze.dot");
     free(path);
     return GRAPH_OK;
 }
 
-GraphStatus DoGraphviz(Graph *const graph) {
-    (void)graph;
-    return GRAPH_OK;
+GraphStatus DoMST(Graph *const graph) {
+    if (!graph) {
+        return GRAPH_NOT_VALID;
+    }
+    return GraphMakeMST(graph);
 }
 
-GraphStatus DoSpecialSearch(Graph *const graph) {
-    (void)graph;
+GraphStatus DoAdjacencyOutput(Graph *const graph) {
+    if (!graph) {
+        return GRAPH_NOT_VALID;
+    }
+    return GraphAdjacencyOutput(graph);
+}
+
+GraphStatus DoDeleteVertex(Graph *const graph) {
+    if (!graph) {
+        return GRAPH_NOT_VALID;
+    }
+    printf("enter target id:\n");
+    size_t id = 0;
+    if (GetSizeT(&id) != INPUT_OK) {
+        return GRAPH_END_OF_INPUT;
+    }
+    return GraphRemoveVertex(graph, id);
+}
+
+GraphStatus DoDeleteEdge(Graph *const graph) {
+    if (!graph) {
+        return GRAPH_NOT_VALID;
+    }
+    printf("enter the id:\n");
+    size_t id = 0;
+    if (GetSizeT(&id) != INPUT_OK) {
+        return GRAPH_END_OF_INPUT;
+    }
+    printf("enter the direction (0 - UP, 1 - RIGHT, 2 - DOWN, 3 - LEFT):\n");
+    int dir_choice = 0;
+    if (GetInt(&dir_choice, 0, 3) != INPUT_OK) {
+        return GRAPH_END_OF_INPUT;
+    }
+    return GraphRemoveEdge(graph, id, (Neighbours)dir_choice);
+}
+
+GraphStatus DoGraphviz(Graph *const graph) {
+    if (!graph) {
+        return GRAPH_NOT_VALID;
+    }
+    char *filename = NULL;
+    printf("enter name of the file regarding project root directory:\n");
+    InputStatus stat = GetString(&filename);
+    if (stat != INPUT_OK) {
+        free(filename);
+        return GRAPH_END_OF_INPUT;
+    }
+    GraphStatus proc_stat = GraphExportDot(graph, filename, NULL);
+    if (proc_stat != GRAPH_OK) {
+        free(filename);
+        return proc_stat;
+    }
+    ViewGraph(graph, filename);
+    free(filename);
     return GRAPH_OK;
 }
 
@@ -197,4 +216,3 @@ GraphStatus ProgramEnd(Graph *const graph) {
     (void)graph;
     return GRAPH_OK;
 }
-

@@ -63,7 +63,7 @@ int GraphComparePoints(const void *const key1, const void *const key2) {
     return !(p1->x == p2->x && p1->y == p2->y);
 }
 
-Vertex *GraphFindVertexByID(const Graph *const graph, const size_t target_id) {
+Vertex *GraphFindVertex(const Graph *const graph, const size_t target_id) {
     if (!graph || !graph->id_table || target_id >= graph->vertex_counter) {
         return NULL;
     }
@@ -79,12 +79,12 @@ GraphStatus GraphAddVertex(Graph *const graph, const Point coords, const VertexT
     }
     if (graph->vertex_counter >= graph->capacity) {
         size_t new_cap = graph->capacity * 2;
-        Vertex **new_table = (Vertex **)realloc(graph->id_table, new_cap * sizeof(Vertex *));
-        if (!new_table) {
+        Vertex **new_id_table = (Vertex **)realloc(graph->id_table, new_cap * sizeof(Vertex *));
+        if (!new_id_table) {
             return GRAPH_MEMORY_ERROR;
         }
-        memset(new_table + graph->capacity, 0, (new_cap - graph->capacity) * sizeof(Vertex *));
-        graph->id_table = new_table;
+        memset(new_id_table + graph->capacity, 0, (new_cap - graph->capacity) * sizeof(Vertex *));
+        graph->id_table = new_id_table;
         graph->capacity = new_cap;
     }
     Vertex *vertex = VertexCreate();
@@ -104,21 +104,24 @@ GraphStatus GraphAddVertex(Graph *const graph, const Point coords, const VertexT
     return GRAPH_OK;
 }
 
-GraphStatus GraphAddEdge(Graph *const graph, const Point from_coords, const Neighbours direction) {
+GraphStatus GraphAddEdge(Graph *const graph, const size_t id, const Neighbours direction) {
     if (!graph) {
         return GRAPH_NOT_VALID;
     }
-    Vertex *const src = (Vertex *)TableFind(graph->data, &from_coords);
+    Vertex *src = graph->id_table[id];
     if (!src) {
         return GRAPH_NOT_FOUND;
     }
     if (src->adjacency[direction]) {
         return GRAPH_DUPLICATE; 
     }
-    Point dest_coords = from_coords;
+    if ((direction == LEFT && src->coords.x == 0) || (direction == DOWN && src->coords.y == 0)) {
+        return GRAPH_NOT_VALID;
+    }
+    Point dest_coords = src->coords;
     dest_coords.x += (direction == RIGHT) - (direction == LEFT);
     dest_coords.y += (direction == UP) - (direction == DOWN);
-    Vertex *const dest = (Vertex *)TableFind(graph->data, &dest_coords);
+    Vertex *dest = (Vertex *)TableFind(graph->data, &dest_coords);
     if (!dest) {
         return GRAPH_NOT_FOUND;
     }
@@ -126,19 +129,34 @@ GraphStatus GraphAddEdge(Graph *const graph, const Point from_coords, const Neig
     return GRAPH_OK;
 }
 
-GraphStatus GraphRemoveVertex(Graph *const graph, const Point target_coords) {
+GraphStatus GraphRemoveEdge(Graph *const graph, const size_t id, const Neighbours direction) {
     if (!graph) {
         return GRAPH_NOT_VALID;
     }
-    Vertex *target = TableFind(graph->data, &target_coords);
+    Vertex *src = graph->id_table[id];
+    if (!src) {
+        return GRAPH_NOT_FOUND;
+    }
+    if (!src->adjacency[direction]) {
+        return GRAPH_NOT_FOUND;
+    }
+    src->adjacency[direction] = NULL;
+    return GRAPH_OK;
+}
+
+GraphStatus GraphRemoveVertex(Graph *const graph, const size_t id) {
+    if (!graph) {
+        return GRAPH_NOT_VALID;
+    }
+    Vertex *target = GraphFindVertex(graph, id);
     if (!target) {
         return GRAPH_NOT_FOUND;
     }
-    for (int i = 0; i < 4; i++) {
-        if ((target_coords.y == 0 && i == DOWN) || (target_coords.x == 0 && i == LEFT)) {
+    for (Neighbours i = 0; i < 4; i++) {
+        if ((target->coords.y == 0 && i == DOWN) || (target->coords.x == 0 && i == LEFT)) {
             continue;
         }
-        Point n_coords = target_coords;
+        Point n_coords = target->coords;
         n_coords.x += (i == RIGHT) - (i == LEFT);
         n_coords.y += (i == UP) - (i == DOWN);
         Vertex *neighbour = TableFind(graph->data, &n_coords);
@@ -150,17 +168,17 @@ GraphStatus GraphRemoveVertex(Graph *const graph, const Point target_coords) {
             }
         }
     }
-    size_t id_to_remove = target->id;
-    TableStatus status = TableRemove(graph->data, &target_coords);
+    size_t remove_id = target->id;
+    TableStatus status = TableRemove(graph->data, &target->coords);
     if (status == TABLE_OK) {
         VertexFree(target);
-        graph->id_table[id_to_remove] = NULL;
+        graph->id_table[remove_id] = NULL;
         return GRAPH_OK;
     }
     return GRAPH_NOT_FOUND;
 }
 
-GraphStatus GraphUpdateVertexByID(Graph *const graph, const size_t target_id, const Point new_coords) {
+GraphStatus GraphUpdateVertex(Graph *const graph, const size_t target_id, const Point new_coords, const VertexType new_type) {
     if (!graph || !graph->id_table || target_id >= graph->vertex_counter) {
         return GRAPH_NOT_VALID;
     }
@@ -169,52 +187,59 @@ GraphStatus GraphUpdateVertexByID(Graph *const graph, const size_t target_id, co
         return GRAPH_NOT_FOUND;
     }
     if (v->coords.x == new_coords.x && v->coords.y == new_coords.y) {
+        v->type = new_type;
         return GRAPH_OK;
     }
     if (TableFind(graph->data, &new_coords) != NULL) {
         return GRAPH_NOT_VALID;
     }
-    Vertex *old_friends[4];
-    for (size_t i = 0; i < 4; i++) {
-        old_friends[i] = v->adjacency[i];
-    }
-    for (Neighbours dir = 0; dir < 4; dir++) {
-        Vertex *old_neighbour = v->adjacency[dir];
-        if (old_neighbour) {
-            for (Neighbours opp = 0; opp < 4; opp++) {
-                if (old_neighbour->adjacency[opp] == v) {
-                    old_neighbour->adjacency[opp] = NULL;
+    Vertex *old_out[4] = {};
+    Vertex *old_in[4] = {};
+    int dx[4] = {0, 1, 0, -1};
+    int dy[4] = {-1, 0, 1, 0};
+    for (Neighbours i = 0; i < 4; i++) {
+        old_out[i] = v->adjacency[i];
+        if ((v->coords.y == 0 && i == DOWN) || (v->coords.x == 0 && i == LEFT)) {
+            continue;
+        }
+        Point n_coords = v->coords;
+        n_coords.x += dx[i];
+        n_coords.y += dy[i];
+        Vertex *neighbour = TableFind(graph->data, &n_coords);
+        if (neighbour) {
+            for (Neighbours j = 0; j < 4; j++) {
+                if (neighbour->adjacency[j] == v) {
+                    old_in[i] = neighbour;
+                    neighbour->adjacency[j] = NULL;
                 }
             }
-            v->adjacency[dir] = NULL;
         }
+        v->adjacency[i] = NULL;
     }
     TableRemove(graph->data, &v->coords);
     v->coords = new_coords;
     TableInsert(graph->data, &v->coords, v);
-    const char *dir_names[] = {"UP", "RIGHT", "DOWN", "LEFT"};
-    int dx[4] = {0, 1, 0, -1};
-    int dy[4] = {-1, 0, 1, 0};
     for (size_t i = 0; i < 4; i++) {
-        Vertex *friend = old_friends[i];
-        if (!friend) {
+        if ((v->coords.y == 0 && i == 2) || (v->coords.x == 0 && i == 3)) {
             continue;
         }
-        bool still_connected = false;
-        for (Neighbours new_dir = 0; new_dir < 4; new_dir++) {
-            size_t check_x = v->coords.x + dx[new_dir];
-            size_t check_y = v->coords.y + dy[new_dir];
-            if (friend->coords.x == check_x && friend->coords.y == check_y) {
-                v->adjacency[new_dir] = friend;
-                friend->adjacency[(new_dir + 2) % 4] = v;
-                still_connected = true;
-                break;
+        Point n_coords = v->coords;
+        n_coords.x += dx[i];
+        n_coords.y += dy[i];
+        Vertex *new_neighbour = TableFind(graph->data, &n_coords);
+        if (!new_neighbour) {
+            continue;
+        }
+        for (size_t j = 0; j < 4; j++) {
+            if (old_out[j] == new_neighbour) {
+                v->adjacency[i] = new_neighbour;
+            }
+            if (old_in[j] == new_neighbour) {
+                new_neighbour->adjacency[(i + 2) % 4] = v;
             }
         }
-        if (!still_connected) {
-            printf("Edge removed between Vertex %zu and Vertex %zu (Friend was at direction %s)\n", v->id, friend->id, dir_names[i]);
-        }
     }
+    v->type = new_type;
     return GRAPH_OK;
 }
 
@@ -272,9 +297,15 @@ GraphStatus GraphImport(Graph *const graph, const char *const filename) {
                 }
             }
         } else {
+            Vertex *src_vertex = (Vertex *)TableFind(graph->data, &coords);
+            if (!src_vertex) {
+                printf("line %zu: source vertex for edge not found\n", line_number);
+                free(buffer);
+                continue;
+            }
             for (Neighbours dir = 0; dir < 4; dir++) {
                 if (strcmp(dir_names[dir], token_last) == 0) {
-                    status = GraphAddEdge(graph, coords, dir);
+                    status = GraphAddEdge(graph, src_vertex->id, dir);
                     if (status == GRAPH_DUPLICATE) {
                         printf("line %zu: duplicate hasn't inserted\n", line_number);
                     }
@@ -353,10 +384,18 @@ Vertex **ShortestPathDijkstra(const Graph *const graph, const size_t start_id, c
     }
     size_t number = graph->vertex_counter;
     Vertex **parent = (Vertex **)calloc(number, sizeof(Vertex *));
+    if (!parent) {
+        return NULL;
+    }
     bool *visited = (bool *)calloc(number, sizeof(bool));
+    if (!visited) {
+        free(parent);
+        return NULL;
+    }
     int *dist = (int *)calloc(number, sizeof(int));
-    if (!dist || !visited || !parent) {
-        free(dist); free(visited); free(parent);
+    if (!dist) {
+        free(visited);
+        free(parent);
         return NULL;
     }
     for (size_t i = 0; i < number; i++) {
@@ -379,7 +418,7 @@ Vertex **ShortestPathDijkstra(const Graph *const graph, const size_t start_id, c
         for (Neighbours dir = 0; dir < 4; dir++) {
             Vertex *neighbour = u->adjacency[dir];
             if (neighbour && !visited[neighbour->id] && dist[u->id] + 1 < dist[neighbour->id]) {
-                dist[neighbour->id] = dist[u->id] + 1;
+                dist[neighbour->id] = dist[u->id] + SINGLE_DISTANCE;
                 parent[neighbour->id] = u;
             }
         }
@@ -389,7 +428,7 @@ Vertex **ShortestPathDijkstra(const Graph *const graph, const size_t start_id, c
         goto exit;
     }
     int path_len = dist[finish->id] + 1;
-    path = (Vertex **)calloc(path_len, sizeof(Vertex *));
+    path = (Vertex **)calloc(path_len + 1, sizeof(Vertex *));
     if (path) {
         Vertex *cur = finish;
         size_t i = path_len;
@@ -397,6 +436,7 @@ Vertex **ShortestPathDijkstra(const Graph *const graph, const size_t start_id, c
             path[--i] = cur;
             cur = parent[cur->id];
         }
+        path[path_len] = NULL;
     }
 exit:
     free(visited);
@@ -410,14 +450,17 @@ Vertex **BFS(const Graph *const graph, const size_t start_id) {
         return NULL;
     }
     Vertex *start = graph->id_table[start_id];
-    if (!start) {
+    if (!start || start->type != ENTRANCE) {
         return NULL;
     }
     size_t number = graph->vertex_counter;
     bool *visited = (bool *)calloc(number, sizeof(bool));
+    if (!visited) {
+        return NULL;
+    }
     Vertex **parent = (Vertex **)calloc(number, sizeof(Vertex *));
-    if (!visited || !parent) {
-        free(visited); free(parent);
+    if (!parent) {
+        free(visited);
         return NULL;
     }
     Vertex **path = NULL;
@@ -465,21 +508,180 @@ Vertex **BFS(const Graph *const graph, const size_t start_id) {
         cur = parent[cur->id];
     }
     size_t i = 0;
-    path = (Vertex **)calloc(number, sizeof(Vertex *));
+    path = (Vertex **)calloc(number + 1, sizeof(Vertex *));
     if (!path) {
         StackFree(stack);
         goto exit;
     }
     while (!IsStackEmpty(stack)) {
         path[i++] = StackPop(stack); 
-    }
-    path = (Vertex **)realloc(path, i * sizeof(Vertex *));
+    } 
     StackFree(stack);
 exit:
     free(visited);
     free(parent);
     QueueFree(queue);
     return path;
+}
+
+GraphStatus GraphMakeMST(Graph *const graph) {
+    if (!graph || graph->vertex_counter == 0) {
+        return GRAPH_NOT_VALID;
+    }
+    size_t number = graph->vertex_counter;
+    GraphStatus status = GRAPH_OK;
+    bool *in_tree = (bool *)calloc(number, sizeof(bool));
+    Vertex **mst_edges_src = (Vertex **)calloc(number * 4, sizeof(Vertex *));
+    Vertex **mst_edges_dst = (Vertex **)calloc(number * 4, sizeof(Vertex *));
+    Neighbours *mst_dirs = (Neighbours *)calloc(number * 4, sizeof(Neighbours));
+    Queue *queue = QueueCreate();
+    if (!in_tree || !mst_edges_src || !mst_edges_dst || !mst_dirs || !queue) {
+        status = GRAPH_MEMORY_ERROR;
+        goto exit;
+    }
+    size_t mst_edge_count = 0;
+    for (size_t i = 0; i < number; i++) {
+        if (graph->id_table[i] && graph->id_table[i]->type == ENTRANCE) {
+            QueuePush(queue, graph->id_table[i]);
+            in_tree[graph->id_table[i]->id] = true;
+        }
+    }
+    while (!IsQueueEmpty(queue)) {
+        Vertex *cur = (Vertex *)QueuePop(queue);
+        for (Neighbours dir = 0; dir < 4; dir++) {
+            Vertex *neighbour = cur->adjacency[dir];
+            if (!neighbour) {
+                continue;
+            }
+            if (!in_tree[neighbour->id]) {
+                in_tree[neighbour->id] = true;
+                mst_edges_src[mst_edge_count] = cur;
+                mst_edges_dst[mst_edge_count] = neighbour;
+                mst_dirs[mst_edge_count] = dir;
+                mst_edge_count++;
+                QueuePush(queue, neighbour);
+            } else {
+                if (neighbour->type == ENTRANCE) {
+                    bool already_exists = false;
+                    for (size_t j = 0; j < mst_edge_count; j++) {
+                        if (mst_edges_src[j] == cur && mst_edges_dst[j] == neighbour) {
+                            already_exists = true;
+                            break;
+                        }
+                    }
+                    if (!already_exists) {
+                        mst_edges_src[mst_edge_count] = cur;
+                        mst_edges_dst[mst_edge_count] = neighbour;
+                        mst_dirs[mst_edge_count] = dir;
+                        mst_edge_count++;
+                    }
+                }
+            }
+        }
+    }
+    const char *dir_names[] = {"UP", "RIGHT", "DOWN", "LEFT"};
+    for (size_t i = 0; i < number; i++) {
+        if (!graph->id_table[i]) {
+            continue;
+        }
+        Vertex *cur = graph->id_table[i];
+        for (Neighbours dir = 0; dir < 4; dir++) {
+            Vertex *neighbour = cur->adjacency[dir];
+            if (!neighbour) {
+                continue;
+            }
+            bool keep_edge = false;
+            for (size_t j = 0; j < mst_edge_count; j++) {
+                if (mst_edges_src[j] == cur && mst_edges_dst[j] == neighbour && mst_dirs[j] == dir) {
+                    keep_edge = true;
+                    break;
+                }
+            }
+            if (!keep_edge) {
+                printf("removed edge from %zu to %zu (direction %s)\n", cur->id, neighbour->id, dir_names[dir]);
+                cur->adjacency[dir] = NULL;
+            }
+        }
+    }
+exit:
+    free(in_tree);
+    free(mst_edges_src);
+    free(mst_edges_dst);
+    free(mst_dirs);
+    QueueFree(queue);
+    return status;
+}
+
+GraphStatus GraphExportDot(const Graph *const graph, const char *const filename, Vertex **const path) {
+    if (!graph || !filename) {
+        return GRAPH_NOT_VALID;
+    }
+    if (!graph->vertex_counter) {
+        return GRAPH_EMPTY;
+    }
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        return GRAPH_NOT_FOUND;
+    }
+    size_t number = graph->vertex_counter;
+    fprintf(file, "digraph Maze {\n");
+    fprintf(file, "    layout=neato;\n");
+    fprintf(file, "    node [shape=box, style=filled, fontname=\"Arial\", width=0.7, height=0.4, fontsize=11, penwidth=1.5];\n");
+    fprintf(file, "    edge [fontsize=9, fontname=\"Arial\"];\n");
+    for (size_t i = 0; i < number; i++) {
+        if (!graph->id_table[i]) {
+            continue;
+        }
+        Vertex *cur = graph->id_table[i];
+        const char *color = "lightgray";
+        if (cur->type == ENTRANCE) {
+            color = "limegreen";
+        } else if (cur->type == EXIT) {
+            color = "crimson";
+        }
+        const char *node_style = "";
+        if (path) {
+            for (size_t j = 0; path[j] != NULL; j++) {
+                if (path[j] == cur) {
+                    if (cur->type == ENTRANCE || cur->type == EXIT) {
+                        node_style = ", color=darkorange, penwidth=3.0";
+                    } else {
+                        color = "darkorange";
+                    }
+                    break;
+                }
+            }
+        }
+        double visual_x = (double)cur->coords.x * 1.6;
+        double visual_y = (double)cur->coords.y * 1.6;
+        fprintf(file, "    %zu [label=\"%zu(%zu,%zu)\", fillcolor=%s%s, pos=\"%f,%f!\"];\n", cur->id, cur->id, cur->coords.x, cur->coords.y, color, node_style, visual_x, visual_y);
+    }
+    const char *dir_names[] = {"UP", "RIGHT", "DOWN", "LEFT"};
+    for (size_t i = 0; i < number; i++) {
+        if (!graph->id_table[i]) {
+            continue;
+        }
+        Vertex *cur = graph->id_table[i];
+        for (Neighbours dir = 0; dir < 4; dir++) {
+            Vertex *neighbour = cur->adjacency[dir];
+            if (!neighbour) {
+                continue;
+            }
+            const char *edge_style = "";
+            if (path) {
+                for (size_t j = 0; path[j] != NULL && path[j + 1] != NULL; j++) {
+                    if (path[j] == cur && path[j + 1] == neighbour) {
+                        edge_style = ", color=darkorange, penwidth=2.5";
+                        break;
+                    }
+                }
+            }
+            fprintf(file, "    %zu -> %zu [label=\"%s\"%s];\n", cur->id, neighbour->id, dir_names[dir], edge_style);
+        }
+    }
+    fprintf(file, "}\n");
+    fclose(file);
+    return GRAPH_OK;
 }
 
 void GraphFree(Graph *const graph) {

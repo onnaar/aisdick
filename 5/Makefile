@@ -2,7 +2,7 @@ MAKEFLAGS += --no-print-directory
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror
-TARGET = xyi 
+TARGET = lab5 
 
 INCLUDE_DIR = include 
 BUILD_DIR = build
