@@ -1,7 +1,6 @@
 #ifndef DIALOGUE_GRAPH_H
 #define DIALOGUE_GRAPH_H
 
-#include <stddef.h>
 #include "graph.h"
 
 typedef GraphStatus (*FunctionArray)(Graph *const);
