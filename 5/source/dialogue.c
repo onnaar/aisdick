@@ -9,7 +9,7 @@
 #include "vertex.h"
 
 void ViewGraph(const Graph *const graph, const char *const dot_filename) {
-    if (!graph || graph->vertex_counter == 0) {
+    if (!graph || graph->id_vector->size == 0) {
         return;
     }
     char command[1024] = {};

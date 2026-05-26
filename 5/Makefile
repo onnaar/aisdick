@@ -12,11 +12,11 @@ LIBS_DIR = libs
 ALL_INCLUDES := $(wildcard $(LIBS_DIR)/*_lib/$(INCLUDE_DIR))
 CFLAGS += -I$(INCLUDE_DIR) $(patsubst %, -I%, $(ALL_INCLUDES))
 
-LDFLAGS = -L$(BUILD_DIR) -lgraph -lqueue -linput -lhtable -lstack -Wl,-rpath,'$$ORIGIN/$(BUILD_DIR)'
+LDFLAGS = -L$(BUILD_DIR) -lgraph -lqueue -linput -lstack -lvector -lhtable -Wl,-rpath,'$$ORIGIN/$(BUILD_DIR)'
 OBJECTS = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(wildcard $(SOURCE_DIR)/*.c))
 
 LIB_FOLDERS = $(wildcard $(LIBS_DIR)/*_lib)
-LIBS_BUILD = $(BUILD_DIR)/libinput.so $(BUILD_DIR)/libgraph.so $(BUILD_DIR)/libqueue.so $(BUILD_DIR)/libhtable.so $(BUILD_DIR)/libstack.so
+LIBS_BUILD = $(BUILD_DIR)/libinput.so $(BUILD_DIR)/libgraph.so $(BUILD_DIR)/libqueue.so $(BUILD_DIR)/libhtable.so $(BUILD_DIR)/libstack.so $(BUILD_DIR)/libvector.so
 
 .PHONY: all clean run super $(LIB_FOLDERS)
 

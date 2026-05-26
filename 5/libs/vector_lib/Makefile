@@ -7,7 +7,7 @@ PROJECT_ROOT_BUILD_DIR = $(ROOT_PATH)/$(BUILD_DIR)
 CC = gcc
 CFLAGS = -I$(INCLUDE_DIR) -fPIC -Wall -Wextra -Werror
 LDFLAGS = -shared
-LIB = libinput.so
+LIB = libvector.so
 
 OBJECTS = $(patsubst $(SOURCE_DIR)/%.c, $(PROJECT_ROOT_BUILD_DIR)/%.o, $(wildcard $(SOURCE_DIR)/*))
 

@@ -3,6 +3,7 @@
 
 #include "hash_table.h"
 #include "vertex.h"
+#include "vector.h"
 #include <stddef.h>
 
 #define FNV_OFFSET 14695981039346656037ULL
@@ -22,10 +23,14 @@ typedef enum {
 
 typedef struct Graph {
     HashTable *data;
-    Vertex **id_table;      
-    size_t vertex_counter;
-    size_t capacity;
+    Vector *id_vector;
 } Graph;
+
+typedef struct {
+    Vertex *src;
+    Vertex *dst;
+    Neighbours dir;
+} MSTEdge;
 
 size_t GraphHash1(const void *const key, const size_t capacity);
 size_t GraphHash2(const void *const key, const size_t capacity);
