@@ -2,6 +2,7 @@
 #define HASH_TABLE_H
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #define INIT_CAPACITY 4
 #define MAX_LOAD_FACTOR_PERCENT 70
@@ -9,6 +10,7 @@
 typedef size_t (*HashFunc)(const void *const key, const size_t capacity);
 typedef int (*CompareFunc)(const void *const key1, const void *const key2);
 typedef void (*DestroyFunc)(void *const data);
+typedef bool (*HashAction)(void);
 
 typedef enum {
     DELETED = -1,

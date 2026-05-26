@@ -197,9 +197,11 @@ GraphStatus GraphUpdateVertex(Graph *const graph, const size_t target_id, const 
     Vertex *old_in[4] = {};
     int dx[4] = {0, 1, 0, -1};
     int dy[4] = {-1, 0, 1, 0};
+    //redo
     for (Neighbours i = 0; i < 4; i++) {
         old_out[i] = v->adjacency[i];
-        if ((v->coords.y == 0 && i == DOWN) || (v->coords.x == 0 && i == LEFT)) {
+        if ((i == DOWN && v->coords.y == 0) || (i == LEFT && v->coords.x == 0)) {
+            v->adjacency[i] = NULL;
             continue;
         }
         Point n_coords = v->coords;
@@ -207,11 +209,10 @@ GraphStatus GraphUpdateVertex(Graph *const graph, const size_t target_id, const 
         n_coords.y += dy[i];
         Vertex *neighbour = TableFind(graph->data, &n_coords);
         if (neighbour) {
-            for (Neighbours j = 0; j < 4; j++) {
-                if (neighbour->adjacency[j] == v) {
-                    old_in[i] = neighbour;
-                    neighbour->adjacency[j] = NULL;
-                }
+            Neighbours opposite = (i + 2) % 4;
+            if (neighbour->adjacency[opposite] == v) {
+                old_in[i] = neighbour;
+                neighbour->adjacency[opposite] = NULL;
             }
         }
         v->adjacency[i] = NULL;
@@ -219,8 +220,8 @@ GraphStatus GraphUpdateVertex(Graph *const graph, const size_t target_id, const 
     TableRemove(graph->data, &v->coords);
     v->coords = new_coords;
     TableInsert(graph->data, &v->coords, v);
-    for (size_t i = 0; i < 4; i++) {
-        if ((v->coords.y == 0 && i == 2) || (v->coords.x == 0 && i == 3)) {
+    for (Neighbours i = 0; i < 4; i++) {
+        if ((i == DOWN && v->coords.y == 0) || (i == LEFT && v->coords.x == 0)) {
             continue;
         }
         Point n_coords = v->coords;

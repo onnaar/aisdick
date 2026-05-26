@@ -13,7 +13,7 @@ void ViewGraph(const Graph *const graph, const char *const dot_filename) {
         return;
     }
     char command[1024] = {};
-    sprintf(command, "neato -Tpng %s -o image/maze.png && kitten icat image/maze.png", dot_filename);
+    sprintf(command, "neato -Gdpi=300 -Tpng %s -o image/maze.png && kitten icat image/maze.png", dot_filename);
     system(command);
 }
 
@@ -57,7 +57,8 @@ GraphStatus DoUpdateVertex(Graph *const graph) {
         return GRAPH_NOT_VALID;
     }
     printf("enter target vertex id:\n");
-    size_t target_id = 0, x = 0, y = 0, type = 0;
+    size_t target_id = 0, x = 0, y = 0;
+    int type = 0;
     if (GetSizeT(&target_id) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
@@ -66,11 +67,11 @@ GraphStatus DoUpdateVertex(Graph *const graph) {
         return GRAPH_END_OF_INPUT;
     }
     printf("new type of vertex (0 - EXIT, 1 - TRANSITION, 2 - ENTRANCE):\n");
-    if (GetSizeT(&type) != INPUT_OK) {
+    if (GetInt(&type, 0, 2) != INPUT_OK) {
         return GRAPH_END_OF_INPUT;
     }
     Point new_coords = {x, y};
-    return GraphUpdateVertex(graph, target_id, new_coords, (Neighbours)type - 1);
+    return GraphUpdateVertex(graph, target_id, new_coords, (VertexType)type - 1);
 }
 
 GraphStatus DoImport(Graph *const graph) {

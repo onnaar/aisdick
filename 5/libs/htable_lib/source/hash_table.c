@@ -47,7 +47,7 @@ TableStatus TableResize(HashTable *table) {
     return TABLE_OK;
 }
 
-static inline HashEntry *BucketFind(const HashTable *const table, const void *const key) {
+static inline HashEntry *BucketFind(const HashTable *const table, const void *const key, HashAction use_deleted) {
     size_t h1 = table->hash1(key, table->capacity);
     size_t h2 = table->hash2(key, table->capacity);
     HashEntry *first_deleted = NULL;
@@ -55,7 +55,10 @@ static inline HashEntry *BucketFind(const HashTable *const table, const void *co
         size_t index = (h1 + i * h2) % table->capacity;
         HashEntry *entry = &table->buckets[index];
         if (entry->state == EMPTY) {
-            return first_deleted ? first_deleted : entry;
+            if (use_deleted() && first_deleted) {
+                return first_deleted;
+            }
+            return entry;
         }
         if (entry->state == DELETED && !first_deleted) {
             first_deleted = entry;
@@ -64,7 +67,15 @@ static inline HashEntry *BucketFind(const HashTable *const table, const void *co
             return entry;
         }
     }
-    return first_deleted;
+    return (use_deleted()) ? first_deleted : NULL;
+}
+
+static inline bool ActionForInsert() {
+    return true;
+}
+
+static inline bool ActionForFind() {
+    return false;
 }
 
 TableStatus TableInsert(HashTable *const table, void *const key, void *const value) {
@@ -80,7 +91,7 @@ TableStatus TableInsert(HashTable *const table, void *const key, void *const val
         }
     }
     status = TABLE_OK;
-    HashEntry *entry = BucketFind(table, key);
+    HashEntry *entry = BucketFind(table, key, ActionForInsert);
     if (!entry) {
         return TABLE_MEMORY_ERROR;
     }
@@ -102,7 +113,7 @@ void *TableFind(const HashTable *const table, const void *const key) {
     if (!table || !key) {
         return NULL;
     }
-    HashEntry *entry = BucketFind(table, key);
+    HashEntry *entry = BucketFind(table, key, ActionForFind);
     return entry ? entry->value : NULL;
 }   
 
@@ -110,7 +121,7 @@ TableStatus TableRemove(HashTable *const table, const void *const key) {
     if (!table || !key) {
         return TABLE_NOT_VALID;
     }
-    HashEntry *entry = BucketFind(table, key);
+    HashEntry *entry = BucketFind(table, key, ActionForFind);
     if (!entry || entry->state != BUSY) {
         return TABLE_NOT_FOUND;
     }
