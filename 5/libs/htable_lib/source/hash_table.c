@@ -67,7 +67,7 @@ static inline HashEntry *BucketFind(const HashTable *const table, const void *co
             return entry;
         }
     }
-    return (use_deleted()) ? first_deleted : NULL;
+    return (use_deleted() && first_deleted) ? first_deleted : NULL;
 }
 
 static inline bool ActionForInsert() {
