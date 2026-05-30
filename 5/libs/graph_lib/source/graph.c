@@ -73,7 +73,7 @@ GraphStatus GraphAddVertex(Graph *const graph, const Point coords, const VertexT
     if (!graph) {
         return GRAPH_NOT_VALID;
     }
-    if (TableFind(graph->data, &coords) != NULL) {
+    if (TableFind(graph->data, &coords)) {
         return GRAPH_DUPLICATE;
     }
     Vertex *vertex = VertexCreate();
@@ -188,7 +188,7 @@ GraphStatus GraphUpdateVertex(Graph *const graph, const size_t target_id, const 
         v->type = new_type;
         return GRAPH_OK;
     }
-    if (TableFind(graph->data, &new_coords) != NULL) {
+    if (TableFind(graph->data, &new_coords)) {
         return GRAPH_NOT_VALID;
     }
     Vertex *old_out[4] = {};
@@ -571,25 +571,15 @@ GraphStatus GraphMakeMST(Graph *const graph) {
                 if (neighbour->type != ENTRANCE) {
                     continue;
                 }
-                bool already_exists = false;
-                for (size_t j = 0; j < mst_edges->size; j++) {
-                    MSTEdge *e = (MSTEdge *)mst_edges->data[j];
-                    if (e->src == cur && e->dst == neighbour) {
-                        already_exists = true;
-                        break;
-                    }
+                MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
+                if (!edge) {
+                    status = GRAPH_MEMORY_ERROR;
+                    goto exit;
                 }
-                if (!already_exists) {
-                    MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
-                    if (!edge) {
-                        status = GRAPH_MEMORY_ERROR;
-                        goto exit;
-                    }
-                    edge->src = cur;
-                    edge->dst = neighbour;
-                    edge->dir = dir;
-                    VectorPush(mst_edges, edge);
-                }
+                edge->src = cur;
+                edge->dst = neighbour;
+                edge->dir = dir;
+                VectorPush(mst_edges, edge);
             }
         }
     }
@@ -639,6 +629,8 @@ GraphStatus GraphExportDot(const Graph *const graph, const char *const filename,
     size_t number = graph->id_vector->size;
     fprintf(file, "digraph Maze {\n");
     fprintf(file, "    layout=neato;\n");
+    fprintf(file, "    splines=true;\n");
+    fprintf(file, "    sep=\"+50\";\n");
     fprintf(file, "    node [shape=box, style=filled, fontname=\"Arial\", width=0.7, height=0.4, fontsize=11, penwidth=1.5];\n");
     fprintf(file, "    edge [fontsize=9, fontname=\"Arial\"];\n");
     for (size_t i = 0; i < number; i++) {
@@ -654,7 +646,7 @@ GraphStatus GraphExportDot(const Graph *const graph, const char *const filename,
         }
         const char *node_style = "";
         if (path) {
-            for (size_t j = 0; path[j] != NULL; j++) {
+            for (size_t j = 0; path[j]; j++) {
                 if (path[j] == cur) {
                     if (cur->type == ENTRANCE || cur->type == EXIT) {
                         node_style = ", color=darkorange, penwidth=3.0";
@@ -682,7 +674,7 @@ GraphStatus GraphExportDot(const Graph *const graph, const char *const filename,
             }
             const char *edge_style = "";
             if (path) {
-                for (size_t j = 0; path[j] != NULL && path[j + 1] != NULL; j++) {
+                for (size_t j = 0; path[j] && path[j + 1]; j++) {
                     if (path[j] == cur && path[j + 1] == neighbour) {
                         edge_style = ", color=darkorange, penwidth=2.5";
                         break;
