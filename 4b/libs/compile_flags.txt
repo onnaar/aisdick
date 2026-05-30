@@ -1,0 +1,4 @@
+-Istack_lib/include
+-Ivector_lib/include
+-Iinput_lib/include
+-Iscapegoat_tree_lib/include
