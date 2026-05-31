@@ -18,8 +18,8 @@ static int ComparePoints(const void *const key1, const void *const key2) {
     return 0;
 }
 
-BoardMap *MapCreate(void) {
-    BoardMap *map = calloc(1, sizeof(BoardMap));
+BoardMap *MapCreate() {
+    BoardMap *map = (BoardMap *)calloc(1, sizeof(BoardMap));
     if (!map) {
         return NULL;
     }
@@ -35,11 +35,11 @@ MapStatus MapInsert(BoardMap *const map, const Point point, const CellType type)
     if (!map || !map->tree) {
         return MAP_NOT_VALID;
     }
-    Point *key = calloc(1, sizeof(Point));
+    Point *key = (Point *)calloc(1, sizeof(Point));
     if (!key) {
         return MAP_MEMORY_ERROR;
     }
-    CellType *val = calloc(1, sizeof(CellType));
+    CellType *val = (CellType *)calloc(1, sizeof(CellType));
     if (!val) {
         free(key);
         return MAP_MEMORY_ERROR;
@@ -56,7 +56,7 @@ MapStatus MapInsert(BoardMap *const map, const Point point, const CellType type)
     return MAP_OK;
 }
 
-MapStatus MapGet(BoardMap *const map, const Point point, CellType *const out_type) {
+MapStatus MapGet(const BoardMap *const map, const Point point, CellType *const out_type) {
     if (!map || !map->tree || !out_type) {
         return MAP_NOT_VALID;
     }

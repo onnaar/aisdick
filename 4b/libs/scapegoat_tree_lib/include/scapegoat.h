@@ -1,5 +1,5 @@
-#ifndef SCAPEGOAT_TREE_H
-#define SCAPEGOAT_TREE_H
+#ifndef SCAPEGOAT_H
+#define SCAPEGOAT_H
 
 #include <stdbool.h>
 #include <stdio.h>

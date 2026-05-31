@@ -18,10 +18,7 @@ static size_t CountInDirection(const GomokuGame *const game, Point point, const 
 }
 
 GomokuStatus GomokuInit(GomokuGame *const game, const size_t board_size, const size_t win_length) {
-    if (!game) {
-        return GOMOKU_ERROR;
-    }
-    if (board_size == 0 || win_length == 0 || win_length > board_size) {
+    if (!game || board_size == 0 || win_length == 0 || win_length > board_size) {
         return GOMOKU_ERROR;
     }
     game->moves = MapCreate();

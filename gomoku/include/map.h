@@ -34,9 +34,9 @@ typedef struct BoardMap BoardMap;
 
 BoardMap* MapCreate();
 
-MapStatus MapInsert(BoardMap* map, Point point, CellType type);
-MapStatus MapGet(BoardMap* map, Point point, CellType* out_type);
-MapStatus MapRemove(BoardMap* map, Point point);
+MapStatus MapInsert(BoardMap *const map, const Point point, const CellType type);
+MapStatus MapGet(const BoardMap *const map, const Point point, CellType *const out_type);
+MapStatus MapRemove(BoardMap *const map, const Point point);
 
 void MapFree(BoardMap* map);
 

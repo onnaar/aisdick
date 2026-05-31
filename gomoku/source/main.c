@@ -11,7 +11,7 @@ GomokuStatus PlayMatch(GomokuGame *const game);
 int main() {
     GomokuGame game = {};
     GomokuAction cur = NULL;
-    GomokuAction func_array[MENU_COUNT] = {[MENU_EXIT] = ProgramEnd, [MENU_START] = DoInit, [MENU_NEW_SIZES] = DoInit};
+    GomokuAction func_array[MENU_COUNT] = {ProgramEnd, DoInit, DoInit};
     int option = 0;
     InputStatus inp_stat = INPUT_OK;
     bool game_initialized = false;
@@ -64,7 +64,7 @@ GomokuStatus PlayMatch(GomokuGame *const game) {
         return GOMOKU_ERROR;
     }
     GomokuStatus stat = GOMOKU_CONTINUE;
-    char *conditions[] = { [GOMOKU_OK] = "OK", [GOMOKU_ERROR] = "INCORRECT", [GOMOKU_INVALID_MOVE] = "INVALID MOVE", [GOMOKU_CELL_OCCUPIED] = "CELL OCCUPIED", [GOMOKU_CONTINUE] = "NEXT MOVE", [GOMOKU_WIN] = "GAME OVER", [GOMOKU_DRAW] = "DRAW" };
+    char *conditions[] = {"OK", "INCORRECT", "INVALID MOVE", "CELL OCCUPIED", "NEXT MOVE", "GAME OVER", "DRAW"};
     DoShowBoard(game);
     while (stat == GOMOKU_CONTINUE) {
         stat = DoMakeTurn(game);
@@ -83,8 +83,7 @@ void MenuPrint(const bool has_played) {
     printf("%d: program end\n", MENU_EXIT);
     if (!has_played) {
         printf("%d: start game\n", MENU_START);
-    }
-    if (has_played) {
+    } else {
         printf("%d: play again (same sizes)\n", MENU_START);
         printf("%d: play again (new sizes)\n", MENU_NEW_SIZES);
     }

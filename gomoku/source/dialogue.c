@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "map.h"
@@ -5,29 +6,28 @@
 #include "dialogue.h"
 #include "input.h"
 
-//😷😷 
+//😷😷😷
 
 GomokuStatus DoInit(GomokuGame *const game) {
     if (!game) {
         return GOMOKU_ERROR;
     }
-    size_t board_size = 0;
-    size_t win_length = 0;
+    int board_size = 0, win_length = 0;
     InputStatus stat = INPUT_OK;
     if (game->board_size > 0) {
         return GomokuInit(game, game->board_size, game->win_length);
     }
     printf("enter board size:\n");
-    stat = GetSizeT(&board_size);
+    stat = GetInt(&board_size, 1, 34);
     if (stat != INPUT_OK) {
         return GOMOKU_ERROR;
     }
     printf("enter win length:\n");
-    stat = GetSizeT(&win_length);
+    stat = GetInt(&win_length, 1, 34);
     if (stat != INPUT_OK) {
         return GOMOKU_ERROR;
     }
-    return GomokuInit(game, board_size, win_length);
+    return GomokuInit(game, (size_t)board_size, (size_t)win_length);
 }
 
 GomokuStatus DoShowBoard(GomokuGame *const game) {
@@ -37,7 +37,8 @@ GomokuStatus DoShowBoard(GomokuGame *const game) {
     size_t x = 0;
     size_t y = 0;
     CellType type = CELL_EMPTY;
-    printf("\033[H\033[J    ");
+    printf("    ");
+   // printf("\033[H\033[J    ");
     for (x = 0; x < game->board_size; x++) {
         printf(" %2zu ", x);
     }
