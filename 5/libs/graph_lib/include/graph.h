@@ -32,6 +32,18 @@ typedef struct {
     Neighbours dir;
 } MSTEdge;
 
+typedef enum {
+    DFS_UNVISITED = 0,
+    DFS_VISITING,
+    DFS_GOOD_PATH,
+    DFS_DEAD_END
+} DFSState;
+
+typedef struct {
+    Vertex *vertex;
+    int dir; 
+} StackFrame;
+
 size_t GraphHash1(const void *const key, const size_t capacity);
 size_t GraphHash2(const void *const key, const size_t capacity);
 int GraphComparePoints(const void *const key1, const void *const key2);

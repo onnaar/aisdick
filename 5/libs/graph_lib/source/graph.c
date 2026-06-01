@@ -535,51 +535,81 @@ GraphStatus GraphMakeMST(Graph *const graph) {
     }
     size_t number = graph->id_vector->size;
     GraphStatus status = GRAPH_OK;
-    bool *in_tree = (bool *)calloc(number, sizeof(bool));
-    Queue *queue = QueueCreate();
+    DFSState *state = (DFSState *)calloc(number, sizeof(DFSState));
     Vector *mst_edges = VectorCreate(number * 4);
-    if (!in_tree || !queue || !mst_edges) {
+    StackFrame *path_history = (StackFrame *)calloc(number, sizeof(StackFrame));
+    if (!state || !mst_edges || !path_history) {
         status = GRAPH_MEMORY_ERROR;
         goto exit;
     }
     for (size_t i = 0; i < number; i++) {
-        if (graph->id_vector->data[i] && ((Vertex *)graph->id_vector->data[i])->type == ENTRANCE) {
-            QueuePush(queue, graph->id_vector->data[i]);
-            in_tree[((Vertex *)graph->id_vector->data[i])->id] = true;
+        if (!graph->id_vector->data[i]) {
+            continue;
         }
-    }
-    while (!IsQueueEmpty(queue)) {
-        Vertex *cur = (Vertex *)QueuePop(queue);
-        for (Neighbours dir = 0; dir < 4; dir++) {
-            Vertex *neighbour = cur->adjacency[dir];
-            if (!neighbour) {
-                continue;
-            }
-            if (!in_tree[neighbour->id]) {
-                in_tree[neighbour->id] = true;
-                MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
-                if (!edge) {
-                    status = GRAPH_MEMORY_ERROR;
-                    goto exit;
+        Vertex *start_node = (Vertex *)graph->id_vector->data[i];
+        if (start_node->type == ENTRANCE && state[start_node->id] == DFS_UNVISITED) {
+            long long top = -1;
+            top++;
+            path_history[top].vertex = start_node;
+            path_history[top].dir = 0;
+            state[start_node->id] = DFS_VISITING;
+            while (top >= 0) {
+                Vertex *cur = path_history[top].vertex;
+                int next_dir = path_history[top].dir;
+                if (next_dir > 0) {
+                    Vertex *prev_neighbour = cur->adjacency[next_dir - 1];
+                    if (prev_neighbour && state[prev_neighbour->id] == DFS_GOOD_PATH) {
+                        MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
+                        if (!edge) {
+                            status = GRAPH_MEMORY_ERROR;
+                            goto exit;
+                        }
+                        edge->src = cur; 
+                        edge->dst = prev_neighbour;
+                        edge->dir = next_dir - 1;
+                        VectorPush(mst_edges, edge);
+                        state[cur->id] = DFS_GOOD_PATH;
+                        top--;
+                        continue;
+                    }
                 }
-                edge->src = cur;
-                edge->dst = neighbour;
-                edge->dir = dir;
-                VectorPush(mst_edges, edge);
-                QueuePush(queue, neighbour);
-            } else {
-                if (neighbour->type != ENTRANCE) {
+                if (cur->type == EXIT) {
+                    state[cur->id] = DFS_GOOD_PATH;
+                    top--;
                     continue;
                 }
-                MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
-                if (!edge) {
-                    status = GRAPH_MEMORY_ERROR;
-                    goto exit;
+                if (path_history[top].dir < 4) {
+                    int current_dir = path_history[top].dir;
+                    path_history[top].dir++;
+                    Vertex *neighbour = cur->adjacency[current_dir];
+                    if (!neighbour) {
+                        continue;
+                    }
+                    if (state[neighbour->id] == DFS_GOOD_PATH) {
+                        MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
+                        if (!edge) {
+                            status = GRAPH_MEMORY_ERROR;
+                            goto exit;
+                        }
+                        edge->src = cur;
+                        edge->dst = neighbour;
+                        edge->dir = current_dir;
+                        VectorPush(mst_edges, edge);
+                        state[cur->id] = DFS_GOOD_PATH;
+                        top--;
+                        continue;
+                    }
+                    if (state[neighbour->id] == DFS_UNVISITED) {
+                        state[neighbour->id] = DFS_VISITING;
+                        top++;
+                        path_history[top].vertex = neighbour;
+                        path_history[top].dir = 0;
+                        continue;
+                    }
+                } else {
+                    state[cur->id] = DFS_DEAD_END;
+                    top--;
                 }
-                edge->src = cur;
-                edge->dst = neighbour;
-                edge->dir = dir;
-                VectorPush(mst_edges, edge);
             }
         }
     }
@@ -609,8 +639,8 @@ GraphStatus GraphMakeMST(Graph *const graph) {
         }
     }
 exit:
-    free(in_tree);
-    QueueFree(queue);
+    free(state);
+    free(path_history);
     VectorFree(mst_edges, free);
     return status;
 }
