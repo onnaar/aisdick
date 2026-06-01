@@ -55,10 +55,7 @@ static inline HashEntry *BucketFind(const HashTable *const table, const void *co
         size_t index = (h1 + i * h2) % table->capacity;
         HashEntry *entry = &table->buckets[index];
         if (entry->state == EMPTY) {
-            if (use_deleted() && first_deleted) {
-                return first_deleted;
-            }
-            return entry;
+            return (use_deleted() && first_deleted) ? first_deleted : entry;
         }
         if (entry->state == DELETED && !first_deleted) {
             first_deleted = entry;
