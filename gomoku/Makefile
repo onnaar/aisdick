@@ -4,13 +4,15 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Werror
 
 type ?= hash
+size ?= 19
+win ?= 5
 TARGET = gomoku
 
 INCLUDE_DIR = include
 BUILD_DIR = build
 SOURCE_DIR = source
 
-LDFLAGS = -L$(BUILD_DIR) -linput -Wl,-rpath,'$$ORIGIN/$(BUILD_DIR)'
+LDFLAGS = -L$(BUILD_DIR) -linput -Wl,-rpath,'$$ORIGIN/$(BUILD_DIR)' -lncursesw
 LIBS_BUILD = $(BUILD_DIR)/libinput.so
 
 COMMON_SOURCES = $(filter-out $(SOURCE_DIR)/hash_adapter.c $(SOURCE_DIR)/tree_adapter.c, $(wildcard $(SOURCE_DIR)/*.c))
@@ -34,7 +36,7 @@ CFLAGS += -I$(INCLUDE_DIR) $(patsubst %, -I%, $(ALL_INCLUDES))
 
 OBJECTS = $(patsubst $(SOURCE_DIR)/%.c, $(BUILD_DIR)/%.o, $(COMMON_SOURCES))
 
-.PHONY: all clean run build_libs
+.PHONY: all clean run build_libs compile
 
 all : $(TARGET)
 
@@ -43,7 +45,7 @@ $(TARGET) : $(LIBS_BUILD) $(OBJECTS)
 
 $(LIBS_BUILD): build_libs
 
-build_libs:
+build_libs :
 	@mkdir -p $(BUILD_DIR)
 	@for dir in $(LIB_FOLDERS); do $(MAKE) -C $$dir; done
 
@@ -51,7 +53,11 @@ $(BUILD_DIR)/%.o : $(SOURCE_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run : $(TARGET) 
-	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all --suppressions=ncurses.supp ./$(TARGET) $(size) $(win)
+
+compile :
+	$(MAKE) clean
+	$(MAKE)
 
 clean :
 	rm -f $(TARGET)

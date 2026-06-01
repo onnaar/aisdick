@@ -1,20 +1,21 @@
-#ifndef DIALOG_H
-#define DIALOG_H
+#ifndef DIALOGUE_H
+#define DIALOGUE_H
 
 #include "gomoku.h"
 
+typedef struct {
+    const char *label;
+    int action_type;
+} MenuItem;
+
 typedef enum {
     MENU_EXIT = 0,
-    MENU_START,
-    MENU_NEW_SIZES,
-    MENU_COUNT
+    MENU_START = 1,
+    MENU_NEW_SIZES = 2
 } MenuOption;
-
-typedef GomokuStatus (*GomokuAction)(GomokuGame *const game);
 
 GomokuStatus DoInit(GomokuGame *const game);
 GomokuStatus DoShowBoard(GomokuGame *const game);
 GomokuStatus DoMakeTurn(GomokuGame *const game);
-GomokuStatus ProgramEnd(GomokuGame *const game);
 
 #endif
