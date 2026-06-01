@@ -6,10 +6,6 @@
 #include "vector.h"
 #include <stddef.h>
 
-#define FNV_OFFSET 14695981039346656037ULL
-#define FNV_PRIME  1099511628211ULL
-#define KNUTH_PRIME 2654435761ULL
-
 typedef enum {
     GRAPH_OK = 0,
     GRAPH_NOT_VALID,
@@ -41,7 +37,7 @@ typedef enum {
 
 typedef struct {
     Vertex *vertex;
-    int dir; 
+    Neighbours dir; 
 } StackFrame;
 
 size_t GraphHash1(const void *const key, const size_t capacity);

@@ -14,6 +14,7 @@ typedef enum Neighbours {
     RIGHT = 1,
     DOWN = 2,
     LEFT = 3,
+    DIR_COUNT = 4
 } Neighbours;
 
 typedef struct Point {

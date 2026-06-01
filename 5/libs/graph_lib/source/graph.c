@@ -17,6 +17,9 @@
 #define EDGE_PARAMETER "e:"
 #define SINGLE_DISTANCE 1
 #define INITIAL_CAPACITY 16
+#define FNV_OFFSET 14695981039346656037ULL
+#define FNV_PRIME  1099511628211ULL
+#define KNUTH_PRIME 11400714819323198485ULL
 
 Graph *GraphCreate() {
     Graph *const graph = (Graph *)calloc(1, sizeof(Graph));
@@ -536,7 +539,7 @@ GraphStatus GraphMakeMST(Graph *const graph) {
     size_t number = graph->id_vector->size;
     GraphStatus status = GRAPH_OK;
     DFSState *state = (DFSState *)calloc(number, sizeof(DFSState));
-    Vector *mst_edges = VectorCreate(number * 4);
+    Vector *mst_edges = VectorCreate(number * DIR_COUNT);
     StackFrame *path_history = (StackFrame *)calloc(number, sizeof(StackFrame));
     if (!state || !mst_edges || !path_history) {
         status = GRAPH_MEMORY_ERROR;
@@ -547,17 +550,19 @@ GraphStatus GraphMakeMST(Graph *const graph) {
             continue;
         }
         Vertex *start_node = (Vertex *)graph->id_vector->data[i];
-        if (start_node->type == ENTRANCE && state[start_node->id] == DFS_UNVISITED) {
+        if (start_node->type == ENTRANCE) {
+            memset(state, 0, number * sizeof(DFSState));
             long long top = -1;
             top++;
             path_history[top].vertex = start_node;
-            path_history[top].dir = 0;
+            path_history[top].dir = UP;
             state[start_node->id] = DFS_VISITING;
             while (top >= 0) {
                 Vertex *cur = path_history[top].vertex;
                 int next_dir = path_history[top].dir;
                 if (next_dir > 0) {
-                    Vertex *prev_neighbour = cur->adjacency[next_dir - 1];
+                    Neighbours prev_dir = (Neighbours)(next_dir - 1);
+                    Vertex *prev_neighbour = cur->adjacency[prev_dir];
                     if (prev_neighbour && state[prev_neighbour->id] == DFS_GOOD_PATH) {
                         MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
                         if (!edge) {
@@ -566,7 +571,7 @@ GraphStatus GraphMakeMST(Graph *const graph) {
                         }
                         edge->src = cur; 
                         edge->dst = prev_neighbour;
-                        edge->dir = next_dir - 1;
+                        edge->dir = prev_dir;
                         VectorPush(mst_edges, edge);
                         state[cur->id] = DFS_GOOD_PATH;
                         top--;
@@ -578,7 +583,7 @@ GraphStatus GraphMakeMST(Graph *const graph) {
                     top--;
                     continue;
                 }
-                if (path_history[top].dir < 4) {
+                if (path_history[top].dir < DIR_COUNT) {
                     int current_dir = path_history[top].dir;
                     path_history[top].dir++;
                     Vertex *neighbour = cur->adjacency[current_dir];
@@ -593,7 +598,7 @@ GraphStatus GraphMakeMST(Graph *const graph) {
                         }
                         edge->src = cur;
                         edge->dst = neighbour;
-                        edge->dir = current_dir;
+                        edge->dir = (Neighbours)current_dir;
                         VectorPush(mst_edges, edge);
                         state[cur->id] = DFS_GOOD_PATH;
                         top--;
@@ -603,7 +608,7 @@ GraphStatus GraphMakeMST(Graph *const graph) {
                         state[neighbour->id] = DFS_VISITING;
                         top++;
                         path_history[top].vertex = neighbour;
-                        path_history[top].dir = 0;
+                        path_history[top].dir = UP;
                         continue;
                     }
                 } else {
@@ -619,7 +624,7 @@ GraphStatus GraphMakeMST(Graph *const graph) {
             continue;
         }
         Vertex *cur = (Vertex *)graph->id_vector->data[i];
-        for (Neighbours dir = 0; dir < 4; dir++) {
+        for (Neighbours dir = UP; dir < DIR_COUNT; dir++) {
             Vertex *neighbour = cur->adjacency[dir];
             if (!neighbour) {
                 continue;
