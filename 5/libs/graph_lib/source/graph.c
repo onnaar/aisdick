@@ -539,7 +539,10 @@ GraphStatus GraphMakeMST(Graph *const graph) {
     size_t number = graph->id_vector->size;
     GraphStatus status = GRAPH_OK;
     Vector *mst_edges = VectorCreate(number * DIR_COUNT);
-    if (!mst_edges) {
+    bool *keep_vertex = (bool *)calloc(number, sizeof(bool));
+    if (!mst_edges || !keep_vertex) {
+        free(keep_vertex);
+        VectorFree(mst_edges, free);
         return GRAPH_MEMORY_ERROR;
     }
     for (size_t i = 0; i < number; i++) {
@@ -579,26 +582,29 @@ GraphStatus GraphMakeMST(Graph *const graph) {
             }
         }
         if (best_path) {
-            for (size_t k = 0; best_path[k] && best_path[k + 1]; k++) {
-                Vertex *u = best_path[k];
-                Vertex *v = best_path[k + 1];
-                Neighbours exact_dir = UP;
-                for (Neighbours d = UP; d < DIR_COUNT; d++) {
-                    if (u->adjacency[d] == v) {
-                        exact_dir = d;
-                        break;
+            for (size_t k = 0; best_path[k]; k++) {
+                keep_vertex[best_path[k]->id] = true;
+                if (best_path[k + 1]) {
+                    Vertex *u = best_path[k];
+                    Vertex *v = best_path[k + 1];
+                    Neighbours exact_dir = UP;
+                    for (Neighbours d = UP; d < DIR_COUNT; d++) {
+                        if (u->adjacency[d] == v) {
+                            exact_dir = d;
+                            break;
+                        }
                     }
+                    MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
+                    if (!edge) {
+                        free(best_path);
+                        status = GRAPH_MEMORY_ERROR;
+                        goto exit;
+                    }
+                    edge->src = u;
+                    edge->dst = v;
+                    edge->dir = exact_dir;
+                    VectorPush(mst_edges, edge);
                 }
-                MSTEdge *edge = (MSTEdge *)calloc(1, sizeof(MSTEdge));
-                if (!edge) {
-                    free(best_path);
-                    status = GRAPH_MEMORY_ERROR;
-                    goto exit;
-                }
-                edge->src = u;
-                edge->dst = v;
-                edge->dir = exact_dir;
-                VectorPush(mst_edges, edge);
             }
             free(best_path);
         }
@@ -628,7 +634,19 @@ GraphStatus GraphMakeMST(Graph *const graph) {
             }
         }
     }
+    for (size_t i = graph->id_vector->size; i > 0; i--) {
+        size_t idx = i - 1;
+        if (!graph->id_vector->data[idx]) {
+            continue;
+        }
+        Vertex *v = (Vertex *)graph->id_vector->data[idx];
+        if (!keep_vertex[v->id]) {
+            printf("removed unused vertex %zu\n", v->id);
+            GraphRemoveVertex(graph, v->id);
+        }
+    }
 exit:
+    free(keep_vertex);
     VectorFree(mst_edges, free);
     return status;
 }
