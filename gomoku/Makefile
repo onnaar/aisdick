@@ -4,8 +4,8 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Werror
 
 type ?= hash
-size ?= 19
-win ?= 5
+s ?= 19
+w ?= 5
 TARGET = gomoku
 
 INCLUDE_DIR = include
@@ -53,7 +53,7 @@ $(BUILD_DIR)/%.o : $(SOURCE_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run : $(TARGET) 
-	valgrind --leak-check=full --show-leak-kinds=all --suppressions=ncurses.supp ./$(TARGET) $(size) $(win)
+	valgrind --leak-check=full --show-leak-kinds=all --suppressions=ncurses.supp ./$(TARGET) $(s) $(w)
 
 compile :
 	$(MAKE) clean

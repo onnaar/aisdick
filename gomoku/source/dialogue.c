@@ -109,7 +109,8 @@ GomokuStatus DoMakeTurn(GomokuGame *const game) {
                 break;
             case 27:
                 curs_set(0);
-                return GOMOKU_ERROR;
+                game->is_finished = true;
+                return GOMOKU_DRAW;
         }
         clear();
     }
