@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <locale.h>
 #include <ncurses.h>
+#include <locale.h>
 #include "gomoku.h"
 #include "dialogue.h"
 #include "map.h"
@@ -12,12 +12,10 @@ int RunMenuLoop();
 
 int main(const int argc, const char *const argv[]) {
     GomokuGame game = {};
-    int size = 0;
-    int win = 0;
-    int selected_option = 0;
-    bool game_initialized = false;
-    bool in_menu = true;
+    int size = 0, win = 0, selected_option = 0;
+    bool game_initialized = false, in_menu = true;
     if (argc < 3) {
+        printf("error:>\n");
         return 0;
     }
     size = atoi(argv[1]);
@@ -64,11 +62,9 @@ int main(const int argc, const char *const argv[]) {
 
 int RunMenuLoop() {
     MenuItem menu[] = {{"play", MENU_START}, {"exit", MENU_EXIT}};
-    int highlight = 0;
-    int ch = 0;
-    int i = 0;
-    int num_options = 2;
-    while (true) {
+    int highlight = 0, ch = 0, i = 0, num_options = 2;
+    bool in_menu = true;
+    while (in_menu) {
         clear();
         mvprintw(0, 0, "😷😃😍😤😮🙉 MENU 😷😃😍😤😮🙉");
         for (i = 0; i < num_options; i++) {
@@ -90,9 +86,11 @@ int RunMenuLoop() {
                 highlight = (highlight < num_options - 1) ? highlight + 1 : 0;
                 break;
             case '\n':
-                return menu[highlight].action_type;
+                in_menu = false;
+                break;
         }
     }
+    return menu[highlight].action_type;
 }
 
 GomokuStatus PlayMatch(GomokuGame *const game) {
@@ -101,7 +99,7 @@ GomokuStatus PlayMatch(GomokuGame *const game) {
     }
     GomokuStatus stat = GOMOKU_CONTINUE;
     char *conditions[] = {"OK", "INCORRECT", "INVALID MOVE", "CELL OCCUPIED", "NEXT MOVE", "GAME OVER", "DRAW"};
-    char *players[] = {"CROSS WON", "NOUGHT WON"};
+    char *players[] = {"CROSS WON", "NOUGHT WON", "DRAW"};
     clear();
     DoShowBoard(game);
     while (stat == GOMOKU_CONTINUE) {
@@ -110,14 +108,18 @@ GomokuStatus PlayMatch(GomokuGame *const game) {
             return GOMOKU_ERROR;
         }
         if (stat != GOMOKU_CONTINUE) {
-            mvprintw((int)game->board_size * 2 + 5, 0, "status: %s", (stat != GOMOKU_WIN) ? conditions[stat] : (game->current_player == CELL_CROSS) ? players[0] : players[1]);
+            if (stat == GOMOKU_WIN || stat == GOMOKU_DRAW) {
+                break;
+            }
+            mvprintw((int)game->board_size * 2 + 5, 0, "status: %s", conditions[stat]);
             refresh();
         }
         if (stat == GOMOKU_INVALID_MOVE || stat == GOMOKU_CELL_OCCUPIED) {
             stat = GOMOKU_CONTINUE;
         }
     }
-    mvprintw(game->board_size * 2 + 7, 0, "press any key to return to menu🙏");
+    mvprintw(0, 1, "status: %s", (stat == GOMOKU_DRAW) ? players[2] : (game->current_player == CELL_CROSS) ? players[0] : players[1]);
+    mvprintw(1, 1, "press any key to return to menu🙏");
     refresh();
     getch();
     return stat;

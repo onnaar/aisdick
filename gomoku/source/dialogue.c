@@ -1,22 +1,18 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <ncurses.h>
-#include <string.h>
 #include "dialogue.h"
 #include "gomoku.h"
 
 GomokuStatus DoShowBoard(GomokuGame *const game) {
-    size_t x = 0;
-    size_t y = 0;
+    size_t x = 0, y = 0;
     int row = 0;
     CellType type = CELL_EMPTY;
     if (!game) {
         return GOMOKU_ERROR;
     }
-    mvprintw(row, 4, " ");
+    mvprintw(row, 3, " ");
     for (x = 0; x < game->board_size; x++) {
-        printw(" %2zu ", x);
+        printw(" %2zu ", x + 1);
     }
     row++;
     mvprintw(row++, 4, "┏");
@@ -32,7 +28,7 @@ GomokuStatus DoShowBoard(GomokuGame *const game) {
             }
             printw("━━━┫");
         }
-        mvprintw(row++, 0, "%2zu  ┃", y);
+        mvprintw(row++, 0, "%2zu  ┃", y + 1);
         for (x = 0; x < game->board_size; x++) {
             Point p = {x, y};
             if (MapGet((BoardMap *)game->moves, p, &type) == MAP_OK) {
@@ -53,16 +49,12 @@ GomokuStatus DoShowBoard(GomokuGame *const game) {
         printw("━━━┻");
     }
     printw("━━━┛");
-    
     return GOMOKU_CONTINUE;
 }
 
 GomokuStatus DoMakeTurn(GomokuGame *const game) {
-    static int cursor_x = 0;
-    static int cursor_y = 0;
-    int ch = 0;
-    int screen_x = 0;
-    int screen_y = 0;
+    static int cursor_x = 0, cursor_y = 0;
+    int ch = 0, screen_x = 0, screen_y = 0;
     bool turn_made = false;
     Point p = {};
     GomokuStatus res = GOMOKU_CONTINUE;
@@ -110,6 +102,7 @@ GomokuStatus DoMakeTurn(GomokuGame *const game) {
             case 27:
                 curs_set(0);
                 game->is_finished = true;
+                clear();
                 return GOMOKU_DRAW;
         }
         clear();

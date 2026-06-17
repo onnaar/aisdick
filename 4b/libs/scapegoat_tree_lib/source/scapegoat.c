@@ -5,10 +5,6 @@
 #include "stack.h"
 #include "vector.h"
 
-#define ALPHA (2.0 / 3.0)
-#define LOG_INV_ALPHA log(1.0 / ALPHA)
-#define TREE_INDEX_NOT_FOUND ((size_t)-1)
-
 ScapegoatTree *TreeCreate(const CompareFunc cmp, const DestroyFunc destroy_key_func, const DestroyFunc destroy_value_func) {
     if (!cmp) {
         return NULL;
@@ -180,10 +176,7 @@ static Node *BuildBalancedSubtree(Vector *node_vector) {
 }
 
 Node *TreeRebuild(Node *const old_sub_root, const size_t sub_tree_size) {
-    if (!old_sub_root) {
-        return NULL;
-    }
-    if (sub_tree_size == 0) {
+    if (!old_sub_root || sub_tree_size == 0) {
         return NULL;
     }
     Vector *node_vector = TreeFlatten(old_sub_root, sub_tree_size);

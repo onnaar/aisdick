@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include "vector.h"
 
+#define ALPHA (2.0 / 3.0)
+#define LOG_INV_ALPHA log(1.0 / ALPHA)
+#define TREE_INDEX_NOT_FOUND ((size_t)-1)
+
 typedef int (*CompareFunc)(const void *const key1, const void *const key2);
 typedef void (*DestroyFunc)(void *const data);
 
